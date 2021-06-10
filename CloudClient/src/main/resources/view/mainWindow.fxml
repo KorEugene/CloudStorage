@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<VBox alignment="CENTER" xmlns="http://javafx.com/javafx/8.0.271" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ru.online.cloud.client.controller.MainController">
+    <MenuBar>
+        <Menu text="File">
+            <MenuItem text="Exit"/>
+        </Menu>
+    </MenuBar>
+
+    <HBox VBox.vgrow="ALWAYS" spacing="10.0">
+        <padding>
+            <Insets top="10" bottom="10" left="10" right="10"/>
+        </padding>
+
+        <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+            <HBox spacing="3.0">
+                <ComboBox/>
+                <TextField editable="false" HBox.hgrow="ALWAYS"/>
+                <Button text="Up"/>
+            </HBox>
+
+            <TableView fx:id="localFiles" VBox.vgrow="ALWAYS"/>
+        </VBox>
+
+        <VBox alignment="CENTER" spacing="10.0">
+            <Button fx:id="uploadButton">
+                <graphic>
+                    <ImageView>
+                        <Image url="/img/upload_arrow.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+
+            <Button fx:id="downloadButton">
+                <graphic>
+                    <ImageView>
+                        <Image url="/img/download_arrow.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+        </VBox>
+
+        <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+            <HBox spacing="3.0">
+                <ComboBox/>
+                <TextField editable="false" HBox.hgrow="ALWAYS"/>
+                <Button text="Up"/>
+            </HBox>
+
+            <TableView fx:id="cloudFiles" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="5">
+        <Button text="Upload"/>
+        <Button text="Download"/>
+        <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+        </padding>
+    </HBox>
+
+</VBox>

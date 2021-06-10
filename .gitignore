@@ -1,0 +1,7 @@
+# Default ignored files
+/shelf/
+.idea
+*.iml
+# Project exclude paths
+/CloudClient/target/
+/CloudServer/target/
