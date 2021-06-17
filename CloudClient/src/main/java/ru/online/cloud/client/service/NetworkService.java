@@ -4,7 +4,9 @@ public interface NetworkService {
 
     void sendCommand(String command);
 
-    String readCommandResult();
+//    String readCommandResult();
+
+    int readCommandResult(byte[] buffer);
 
     void closeConnection();
 

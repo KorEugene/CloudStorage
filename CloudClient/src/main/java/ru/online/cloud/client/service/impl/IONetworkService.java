@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class IONetworkService implements NetworkService {
 
@@ -18,7 +19,8 @@ public class IONetworkService implements NetworkService {
     public static DataInputStream in;
     public static DataOutputStream out;
 
-    private IONetworkService() { }
+    private IONetworkService() {
+    }
 
     public static IONetworkService getInstance() {
         if (instance == null) {
@@ -51,17 +53,16 @@ public class IONetworkService implements NetworkService {
     @Override
     public void sendCommand(String command) {
         try {
-            out.writeUTF(command);
+            out.write(command.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    public String readCommandResult() {
+    public int readCommandResult(byte[] buffer) {
         try {
-            return in.readUTF();
+            return in.read(buffer);
         } catch (IOException e) {
             throw new RuntimeException("Read command result exception: " + e.getMessage());
         }

@@ -17,7 +17,7 @@ public class MainApplication extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("view/mainWindow.fxml"));
         Parent parent = loader.load();
         primaryStage.setTitle("Cloud Client");
-        primaryStage.setScene(new Scene(parent, 800, 600));
+        primaryStage.setScene(new Scene(parent, 1280, 720));
         primaryStage.setResizable(true);
         InputStream clientIconStream = MainApplication.class.getResourceAsStream("/img/cloud_client.png");
         Image chatIcon = new Image(clientIconStream);

@@ -6,11 +6,12 @@
 
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
+
 <VBox alignment="CENTER" xmlns="http://javafx.com/javafx/8.0.271" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="ru.online.cloud.client.controller.MainController">
     <MenuBar>
         <Menu text="File">
-            <MenuItem text="Exit"/>
+            <MenuItem text="Exit" onAction="#btnCloseApp"/>
         </Menu>
     </MenuBar>
 
@@ -21,9 +22,9 @@
 
         <VBox HBox.hgrow="ALWAYS" spacing="5.0">
             <HBox spacing="3.0">
-                <ComboBox/>
-                <TextField editable="false" HBox.hgrow="ALWAYS"/>
-                <Button text="Up"/>
+                <ComboBox fx:id="disksBox" onAction="#selectDisk"/>
+                <TextField fx:id="pathField" editable="false" HBox.hgrow="ALWAYS"/>
+                <Button text="Up" onAction="#btnPathUp"/>
             </HBox>
 
             <TableView fx:id="localFiles" VBox.vgrow="ALWAYS"/>
