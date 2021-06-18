@@ -12,6 +12,7 @@
     <modules>
         <module>CloudClient</module>
         <module>CloudServer</module>
+        <module>CommonDomain</module>
     </modules>
 
     <dependencies>

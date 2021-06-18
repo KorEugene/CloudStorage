@@ -1,4 +1,4 @@
-package ru.online.cloud.server.service.impl;
+package ru.online.cloud.server.core;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -10,7 +10,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
-import ru.online.cloud.server.core.CommandInboundHandler;
+import ru.online.cloud.server.core.handler.CommandInboundHandler;
+import ru.online.cloud.server.core.handler.NotifyInboundHandler;
 import ru.online.cloud.server.service.ServerService;
 
 public class NettyServerService implements ServerService {
@@ -37,8 +38,9 @@ public class NettyServerService implements ServerService {
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
-                    protected void initChannel(SocketChannel channel) throws Exception {
+                    protected void initChannel(SocketChannel channel) {
                         channel.pipeline()
+                                .addLast(new NotifyInboundHandler())
                                 .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                 .addLast(new ObjectEncoder())
                                 .addLast(new CommandInboundHandler());

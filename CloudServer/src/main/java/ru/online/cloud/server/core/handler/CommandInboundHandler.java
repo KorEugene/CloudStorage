@@ -1,11 +1,12 @@
-package ru.online.cloud.server.core;
+package ru.online.cloud.server.core.handler;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import ru.online.domain.Command;
 import ru.online.cloud.server.factory.Factory;
 import ru.online.cloud.server.service.CommandDictionaryService;
 
-public class CommandInboundHandler extends SimpleChannelInboundHandler<String> {
+public class CommandInboundHandler extends SimpleChannelInboundHandler<Command> {
 
     private CommandDictionaryService dictionaryService;
 
@@ -14,7 +15,7 @@ public class CommandInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, String command) {
+    protected void channelRead0(ChannelHandlerContext ctx, Command command) {
         String result = dictionaryService.processCommand(command);
         ctx.writeAndFlush(result);
     }

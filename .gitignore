@@ -5,3 +5,4 @@
 # Project exclude paths
 /CloudClient/target/
 /CloudServer/target/
+/CommonDomain/target/

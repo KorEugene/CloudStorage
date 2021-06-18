@@ -1,13 +1,12 @@
 package ru.online.cloud.client.service;
 
+import ru.online.domain.Command;
+
 public interface NetworkService {
 
-    void sendCommand(String command);
+    void sendCommand(Command command);
 
-//    String readCommandResult();
-
-    int readCommandResult(byte[] buffer);
+    String readCommandResult();
 
     void closeConnection();
-
 }

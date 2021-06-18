@@ -7,10 +7,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
 import ru.online.cloud.client.factory.Factory;
-import ru.online.cloud.client.service.NetworkService;
 import ru.online.cloud.client.model.FileInfo;
+import ru.online.cloud.client.service.ClientService;
+import ru.online.cloud.client.service.NetworkService;
+import ru.online.domain.Command;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -27,8 +29,13 @@ public class MainController implements Initializable {
     public TextField commandTextField;
     public TextArea commandResultTextArea;
 
+    public ClientService clientService;
     public NetworkService networkService;
 
+    @FXML
+    private Button btnConnect;
+    @FXML
+    private Button btnDisconnect;
     @FXML
     private TextField pathField;
     @FXML
@@ -40,32 +47,33 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        networkService = Factory.getNetworkService();
 
+        btnDisconnect.setDisable(true);
         createCommandResultHandler();
 
         initializePanel();
     }
 
     private void createCommandResultHandler() {
-        new Thread(() -> {
-            byte[] buffer = new byte[1024];
-            while (true) {
+//        new Thread(() -> {
+//            while (true) {
 //                String resultCommand = networkService.readCommandResult();
-                int countReadBytes = networkService.readCommandResult(buffer);
-                String resultCommand = new String(buffer, 0, countReadBytes);
-                Platform.runLater(() -> commandResultTextArea.appendText(resultCommand + System.lineSeparator()));
-            }
-        }).start();
+//                Platform.runLater(() -> commandResultTextArea.appendText(resultCommand + System.lineSeparator()));
+//            }
+//        }).start();
     }
 
     public void sendCommand(ActionEvent actionEvent) {
-        networkService.sendCommand(commandTextField.getText().trim());
-        commandTextField.clear();
+        String[] textCommand = commandTextField.getText().trim().split("\\s");
+        if (textCommand.length > 1) {
+            String[] commandArgs = Arrays.copyOfRange(textCommand, 1, textCommand.length);
+            networkService.sendCommand(new Command(textCommand[0], commandArgs));
+            commandTextField.clear();
+        }
     }
 
     public void shutdown() {
-        networkService.closeConnection();
+//        networkService.closeConnection();
     }
 
 
@@ -160,4 +168,23 @@ public class MainController implements Initializable {
         return pathField.getText();
     }
 
+    public void connectToServer(ActionEvent actionEvent) {
+        if (clientService == null) {
+            clientService = Factory.getClientService();
+        } else {
+            clientService.startClient();
+        }
+        networkService = Factory.getNetworkService();
+        switchButtonsState();
+    }
+
+    public void disconnectFromServer(ActionEvent actionEvent) {
+        clientService.stopClient();
+        switchButtonsState();
+    }
+
+    private void switchButtonsState() {
+        btnConnect.setDisable(!btnConnect.isDisabled());
+        btnDisconnect.setDisable(!btnDisconnect.isDisabled());
+    }
 }

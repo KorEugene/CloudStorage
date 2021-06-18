@@ -1,5 +1,6 @@
 package ru.online.cloud.server.service.impl.command;
 
+import ru.online.domain.Command;
 import ru.online.cloud.server.service.CommandService;
 
 import java.io.File;
@@ -7,15 +8,14 @@ import java.io.File;
 public class ViewFilesInDirCommand implements CommandService {
 
     @Override
-    public String processCommand(String command) {
-        final int requirementCountCommandParts = 2;
+    public String processCommand(Command command) {
+        final int requirementCountArgs = 1;
 
-        String[] actualCommandParts = command.split("\\s");
-        if (actualCommandParts.length != requirementCountCommandParts) {
+        if (command.getArgs().length != requirementCountArgs) {
             throw new IllegalArgumentException("Command \"" + getCommand() + "\" is not correct");
         }
 
-        return process(actualCommandParts[1]);
+        return process(command.getArgs()[0]);
     }
 
     private String process(String dirPath) {
