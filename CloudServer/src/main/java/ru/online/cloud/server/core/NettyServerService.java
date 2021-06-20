@@ -11,7 +11,6 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import ru.online.cloud.server.core.handler.CommandInboundHandler;
-import ru.online.cloud.server.core.handler.NotifyInboundHandler;
 import ru.online.cloud.server.service.ServerService;
 
 public class NettyServerService implements ServerService {
@@ -40,7 +39,6 @@ public class NettyServerService implements ServerService {
                     @Override
                     protected void initChannel(SocketChannel channel) {
                         channel.pipeline()
-                                .addLast(new NotifyInboundHandler())
                                 .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                 .addLast(new ObjectEncoder())
                                 .addLast(new CommandInboundHandler());

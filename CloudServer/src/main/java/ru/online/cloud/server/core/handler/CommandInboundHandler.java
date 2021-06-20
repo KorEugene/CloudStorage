@@ -15,8 +15,19 @@ public class CommandInboundHandler extends SimpleChannelInboundHandler<Command> 
     }
 
     @Override
+    public void channelActive(ChannelHandlerContext ctx) {
+        System.out.println("Подключился новый клиент: " + ctx);
+    }
+
+    @Override
     protected void channelRead0(ChannelHandlerContext ctx, Command command) {
+        System.out.println("Получена команда: " + command.getCommandName());
         String result = dictionaryService.processCommand(command);
         ctx.writeAndFlush(result);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        System.out.println("Клиент: " + ctx + " отключился");
     }
 }

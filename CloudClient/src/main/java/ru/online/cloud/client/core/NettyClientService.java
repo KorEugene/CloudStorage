@@ -10,6 +10,7 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import ru.online.cloud.client.service.ClientService;
+import ru.online.domain.Command;
 
 public class NettyClientService implements ClientService {
 
@@ -26,7 +27,6 @@ public class NettyClientService implements ClientService {
     public static NettyClientService getInstance() {
         if (instance == null) {
             instance = new NettyClientService();
-            instance.startClient();
         }
         return instance;
     }
@@ -47,13 +47,15 @@ public class NettyClientService implements ClientService {
                                         .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                         .addLast(new ObjectEncoder());
 //                                        .addLast(new ChunkedWriteHandler())
-//                                        .addLast(new CommandOutboundHandler())
+//                                        .addLast(new CommandOutboundHandler());
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
+                System.out.println("Клиент подключился к серверу " + HOST + ":" + PORT);
                 future.channel().closeFuture().sync();
+                System.out.println("Клиент отключился от сервера " + HOST + ":" + PORT);
             } catch (Exception exception) {
-                System.out.println("Соединение закрыто!");
+                System.out.println("Клиент упал");
             } finally {
                 workerGroup.shutdownGracefully();
             }
@@ -71,4 +73,11 @@ public class NettyClientService implements ClientService {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void sendCommand(Command command) {
+        channel.writeAndFlush(command);
+    }
+
+
 }

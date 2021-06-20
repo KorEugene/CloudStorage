@@ -29,8 +29,10 @@ public class MainController implements Initializable {
     public TextField commandTextField;
     public TextArea commandResultTextArea;
 
-    public ClientService clientService;
     public NetworkService networkService;
+
+    @FXML
+    public Button btnListDirs;
 
     @FXML
     private Button btnConnect;
@@ -64,25 +66,25 @@ public class MainController implements Initializable {
     }
 
     public void sendCommand(ActionEvent actionEvent) {
-        String[] textCommand = commandTextField.getText().trim().split("\\s");
-        if (textCommand.length > 1) {
-            String[] commandArgs = Arrays.copyOfRange(textCommand, 1, textCommand.length);
-            networkService.sendCommand(new Command(textCommand[0], commandArgs));
-            commandTextField.clear();
-        }
+//        String[] textCommand = commandTextField.getText().trim().split("\\s");
+//        if (textCommand.length > 1) {
+//            String[] commandArgs = Arrays.copyOfRange(textCommand, 1, textCommand.length);
+//            networkService.sendCommand(new Command(textCommand[0], commandArgs));
+//            commandTextField.clear();
+//        }
     }
 
     public void shutdown() {
-//        networkService.closeConnection();
-    }
-
-
-    public void btnCloseApp(ActionEvent actionEvent) {
-        networkService.closeConnection();
+        disconnectFromServer();
         Platform.exit();
     }
 
-    public void btnPathUp(ActionEvent actionEvent) {
+
+    public void btnCloseApp() {
+        shutdown();
+    }
+
+    public void btnPathUp() {
         Path upperPath = Paths.get(pathField.getText()).getParent();
         if (upperPath != null) {
             updateList(upperPath);
@@ -168,23 +170,28 @@ public class MainController implements Initializable {
         return pathField.getText();
     }
 
-    public void connectToServer(ActionEvent actionEvent) {
-        if (clientService == null) {
-            clientService = Factory.getClientService();
-        } else {
-            clientService.startClient();
+    public void connectToServer() {
+        if (networkService == null) {
+            networkService = Factory.getNetworkService();
         }
-        networkService = Factory.getNetworkService();
+        networkService.openConnection();
         switchButtonsState();
     }
 
-    public void disconnectFromServer(ActionEvent actionEvent) {
-        clientService.stopClient();
+    public void disconnectFromServer() {
+        if (networkService != null) {
+            networkService.closeConnection();
+        }
         switchButtonsState();
     }
 
     private void switchButtonsState() {
         btnConnect.setDisable(!btnConnect.isDisabled());
         btnDisconnect.setDisable(!btnDisconnect.isDisabled());
+    }
+
+    public void listDirs() {
+        Command c = new Command("ls",new String[]{"."});
+        networkService.sendCommand(c);
     }
 }
