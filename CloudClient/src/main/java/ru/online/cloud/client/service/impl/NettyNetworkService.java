@@ -1,6 +1,7 @@
 package ru.online.cloud.client.service.impl;
 
 import ru.online.cloud.client.factory.Factory;
+import ru.online.cloud.client.service.Callback;
 import ru.online.cloud.client.service.ClientService;
 import ru.online.cloud.client.service.NetworkService;
 import ru.online.domain.Command;
@@ -11,13 +12,13 @@ public class NettyNetworkService implements NetworkService {
 
     private static NettyNetworkService instance;
 
-    private NettyNetworkService() {
-        this.clientService = Factory.getClientService();
+    private NettyNetworkService(Callback incomingData) {
+        this.clientService = Factory.getClientService(incomingData);
     }
 
-    public static NetworkService getInstance() {
+    public static NetworkService getInstance(Callback incomingData) {
         if (instance == null) {
-            instance = new NettyNetworkService();
+            instance = new NettyNetworkService(incomingData);
         }
         return instance;
     }
@@ -28,7 +29,7 @@ public class NettyNetworkService implements NetworkService {
     }
 
     @Override
-    public String readCommandResult() {
+    public java.lang.String readCommandResult() {
         return null;
     }
 

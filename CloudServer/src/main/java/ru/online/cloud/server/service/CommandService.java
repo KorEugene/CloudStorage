@@ -4,8 +4,8 @@ import ru.online.domain.Command;
 
 public interface CommandService {
 
-    String processCommand(Command command);
+    java.lang.String processCommand(Command command);
 
-    String getCommand();
+    java.lang.String getCommand();
 
 }

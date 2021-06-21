@@ -22,7 +22,8 @@ public class CommandInboundHandler extends SimpleChannelInboundHandler<Command> 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Command command) {
         System.out.println("Получена команда: " + command.getCommandName());
-        String result = dictionaryService.processCommand(command);
+//        java.lang.String result = dictionaryService.processCommand(command);
+        Command result = new Command("result", new String[]{dictionaryService.processCommand(command)});
         ctx.writeAndFlush(result);
     }
 

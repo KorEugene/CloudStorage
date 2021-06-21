@@ -50,12 +50,13 @@
 
         <VBox HBox.hgrow="ALWAYS" spacing="5.0">
             <HBox spacing="3.0">
-                <ComboBox/>
+<!--                <ComboBox/>-->
                 <TextField editable="false" HBox.hgrow="ALWAYS"/>
                 <Button text="Up"/>
             </HBox>
 
             <TableView fx:id="cloudFiles" VBox.vgrow="ALWAYS"/>
+            <TextArea fx:id="commandResultTextArea"/>
         </VBox>
     </HBox>
 

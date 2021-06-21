@@ -9,7 +9,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import ru.online.cloud.client.factory.Factory;
 import ru.online.cloud.client.model.FileInfo;
-import ru.online.cloud.client.service.ClientService;
 import ru.online.cloud.client.service.NetworkService;
 import ru.online.domain.Command;
 
@@ -20,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -41,7 +39,7 @@ public class MainController implements Initializable {
     @FXML
     private TextField pathField;
     @FXML
-    private ComboBox<String> disksBox;
+    private ComboBox<java.lang.String> disksBox;
     @FXML
     private TableView<FileInfo> localFiles;
     @FXML
@@ -92,10 +90,10 @@ public class MainController implements Initializable {
     }
 
     public void initializePanel() {
-        TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
+        TableColumn<FileInfo, java.lang.String> fileTypeColumn = new TableColumn<>("Type");
         fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType().getName()));
 
-        TableColumn<FileInfo, String> fileNameColumn = new TableColumn<>("Name");
+        TableColumn<FileInfo, java.lang.String> fileNameColumn = new TableColumn<>("Name");
         fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileName()));
 
         TableColumn<FileInfo, Long> fileSizeColumn = new TableColumn<>("Size");
@@ -108,7 +106,7 @@ public class MainController implements Initializable {
                     setText(null);
                     setStyle("");
                 } else {
-                    String text = String.format("%,d bytes", item);
+                    java.lang.String text = java.lang.String.format("%,d bytes", item);
                     if (item == -1L) {
                         text = "[DIR]";
                     }
@@ -118,7 +116,7 @@ public class MainController implements Initializable {
         });
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        TableColumn<FileInfo, String> fileDateColumn = new TableColumn<>("Last modified");
+        TableColumn<FileInfo, java.lang.String> fileDateColumn = new TableColumn<>("Last modified");
         fileDateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(dtf)));
 
         localFiles.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDateColumn);
@@ -155,24 +153,27 @@ public class MainController implements Initializable {
     }
 
     public void selectDisk(ActionEvent actionEvent) {
-        ComboBox<String> element = (ComboBox<String>) actionEvent.getSource();
+        ComboBox<java.lang.String> element = (ComboBox<java.lang.String>) actionEvent.getSource();
         updateList(Paths.get(element.getSelectionModel().getSelectedItem()));
     }
 
-    public String getSelectedFilename() {
+    public java.lang.String getSelectedFilename() {
         if (!localFiles.isFocused()) {
             return null;
         }
         return localFiles.getSelectionModel().getSelectedItem().getFileName();
     }
 
-    public String getCurrentPath() {
+    public java.lang.String getCurrentPath() {
         return pathField.getText();
     }
 
     public void connectToServer() {
         if (networkService == null) {
-            networkService = Factory.getNetworkService();
+            networkService = Factory.getNetworkService((command) -> {
+                commandResultTextArea.clear();
+                commandResultTextArea.appendText(command.getArgs()[0]);
+            });
         }
         networkService.openConnection();
         switchButtonsState();
@@ -191,7 +192,7 @@ public class MainController implements Initializable {
     }
 
     public void listDirs() {
-        Command c = new Command("ls",new String[]{"."});
+        Command c = new Command("ls",new java.lang.String[]{"."});
         networkService.sendCommand(c);
     }
 }

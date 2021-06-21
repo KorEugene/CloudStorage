@@ -9,24 +9,28 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
+import ru.online.cloud.client.core.handler.DataInboundHandler;
+import ru.online.cloud.client.service.Callback;
 import ru.online.cloud.client.service.ClientService;
 import ru.online.domain.Command;
 
 public class NettyClientService implements ClientService {
 
-    private static final String HOST = "localhost";
+    private static final java.lang.String HOST = "localhost";
     private static final int PORT = 8189;
 
     private SocketChannel channel;
+    private Callback incomingData;
 
     private static NettyClientService instance;
 
-    private NettyClientService() {
+    private NettyClientService(Callback incomingData) {
+        this.incomingData = incomingData;
     }
 
-    public static NettyClientService getInstance() {
+    public static NettyClientService getInstance(Callback incomingData) {
         if (instance == null) {
-            instance = new NettyClientService();
+            instance = new NettyClientService(incomingData);
         }
         return instance;
     }
@@ -45,7 +49,8 @@ public class NettyClientService implements ClientService {
                                 channel = socketChannel;
                                 socketChannel.pipeline()
                                         .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
-                                        .addLast(new ObjectEncoder());
+                                        .addLast(new ObjectEncoder())
+                                        .addLast(new DataInboundHandler(incomingData));
 //                                        .addLast(new ChunkedWriteHandler())
 //                                        .addLast(new CommandOutboundHandler());
                             }

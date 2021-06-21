@@ -4,6 +4,6 @@ import ru.online.domain.Command;
 
 public interface CommandDictionaryService {
 
-    String processCommand(Command command);
+    java.lang.String processCommand(Command command);
 
 }
