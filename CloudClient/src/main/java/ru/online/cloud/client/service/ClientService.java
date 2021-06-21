@@ -8,5 +8,5 @@ public interface ClientService {
 
     void stopClient();
 
-    void sendCommand(Command command);
+    void sendCommand(Command command, Callback callback);
 }

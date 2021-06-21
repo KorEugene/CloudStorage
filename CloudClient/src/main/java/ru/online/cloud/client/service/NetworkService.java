@@ -5,7 +5,7 @@ import ru.online.domain.Command;
 
 public interface NetworkService {
 
-    void sendCommand(Command command);
+    void sendCommand(Command command, Callback callback);
 
     String readCommandResult();
 

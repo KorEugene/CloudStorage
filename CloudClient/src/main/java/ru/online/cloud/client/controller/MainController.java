@@ -8,9 +8,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import ru.online.cloud.client.factory.Factory;
-import ru.online.cloud.client.model.FileInfo;
+import ru.online.domain.FileInfo;
 import ru.online.cloud.client.service.NetworkService;
 import ru.online.domain.Command;
+import ru.online.domain.CommandType;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,6 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -39,7 +42,7 @@ public class MainController implements Initializable {
     @FXML
     private TextField pathField;
     @FXML
-    private ComboBox<java.lang.String> disksBox;
+    private ComboBox<String> disksBox;
     @FXML
     private TableView<FileInfo> localFiles;
     @FXML
@@ -52,6 +55,7 @@ public class MainController implements Initializable {
         createCommandResultHandler();
 
         initializePanel();
+        initCloudView();
     }
 
     private void createCommandResultHandler() {
@@ -90,10 +94,10 @@ public class MainController implements Initializable {
     }
 
     public void initializePanel() {
-        TableColumn<FileInfo, java.lang.String> fileTypeColumn = new TableColumn<>("Type");
+        TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
         fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType().getName()));
 
-        TableColumn<FileInfo, java.lang.String> fileNameColumn = new TableColumn<>("Name");
+        TableColumn<FileInfo, String> fileNameColumn = new TableColumn<>("Name");
         fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileName()));
 
         TableColumn<FileInfo, Long> fileSizeColumn = new TableColumn<>("Size");
@@ -106,7 +110,7 @@ public class MainController implements Initializable {
                     setText(null);
                     setStyle("");
                 } else {
-                    java.lang.String text = java.lang.String.format("%,d bytes", item);
+                    String text = String.format("%,d bytes", item);
                     if (item == -1L) {
                         text = "[DIR]";
                     }
@@ -116,7 +120,7 @@ public class MainController implements Initializable {
         });
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        TableColumn<FileInfo, java.lang.String> fileDateColumn = new TableColumn<>("Last modified");
+        TableColumn<FileInfo, String> fileDateColumn = new TableColumn<>("Last modified");
         fileDateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(dtf)));
 
         localFiles.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDateColumn);
@@ -153,27 +157,24 @@ public class MainController implements Initializable {
     }
 
     public void selectDisk(ActionEvent actionEvent) {
-        ComboBox<java.lang.String> element = (ComboBox<java.lang.String>) actionEvent.getSource();
+        ComboBox<String> element = (ComboBox<String>) actionEvent.getSource();
         updateList(Paths.get(element.getSelectionModel().getSelectedItem()));
     }
 
-    public java.lang.String getSelectedFilename() {
+    public String getSelectedFilename() {
         if (!localFiles.isFocused()) {
             return null;
         }
         return localFiles.getSelectionModel().getSelectedItem().getFileName();
     }
 
-    public java.lang.String getCurrentPath() {
+    public String getCurrentPath() {
         return pathField.getText();
     }
 
     public void connectToServer() {
         if (networkService == null) {
-            networkService = Factory.getNetworkService((command) -> {
-                commandResultTextArea.clear();
-                commandResultTextArea.appendText(command.getArgs()[0]);
-            });
+            networkService = Factory.getNetworkService();
         }
         networkService.openConnection();
         switchButtonsState();
@@ -183,6 +184,7 @@ public class MainController implements Initializable {
         if (networkService != null) {
             networkService.closeConnection();
         }
+        cloudFiles.getItems().clear();
         switchButtonsState();
     }
 
@@ -192,7 +194,51 @@ public class MainController implements Initializable {
     }
 
     public void listDirs() {
-        Command c = new Command("ls",new java.lang.String[]{"."});
-        networkService.sendCommand(c);
+        Command command = new Command(CommandType.LS, new String[]{"."});
+        networkService.sendCommand(command, (result) -> {
+//            commandResultTextArea.clear();
+//            commandResultTextArea.appendText((String) result.getArgs()[0]);
+            Platform.runLater(() -> {
+                cloudFiles.getItems().clear();
+                List<FileInfo> fileInfoList = (List<FileInfo>) result.getArgs()[0];
+                cloudFiles.getItems().addAll(fileInfoList);
+                cloudFiles.sort();
+            });
+
+        });
+    }
+
+    private void initCloudView() {
+        TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
+        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType().getName()));
+
+        TableColumn<FileInfo, String> fileNameColumn = new TableColumn<>("Name");
+        fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileName()));
+
+        TableColumn<FileInfo, Long> fileSizeColumn = new TableColumn<>("Size");
+        fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getSize()));
+        fileSizeColumn.setCellFactory(column -> new TableCell<FileInfo, Long>() {
+            @Override
+            protected void updateItem(Long item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    String text = String.format("%,d bytes", item);
+                    if (item == -1L) {
+                        text = "[DIR]";
+                    }
+                    setText(text);
+                }
+            }
+        });
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        TableColumn<FileInfo, String> fileDateColumn = new TableColumn<>("Last modified");
+        fileDateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(dtf)));
+
+        cloudFiles.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDateColumn);
+        cloudFiles.getSortOrder().add(fileTypeColumn);
     }
 }

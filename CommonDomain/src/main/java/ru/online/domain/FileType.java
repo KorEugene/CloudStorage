@@ -1,4 +1,4 @@
-package ru.online.cloud.client.model;
+package ru.online.domain;
 
 public enum FileType {
 

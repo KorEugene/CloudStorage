@@ -20,17 +20,16 @@ public class NettyClientService implements ClientService {
     private static final int PORT = 8189;
 
     private SocketChannel channel;
-    private Callback incomingData;
+    private DataInboundHandler dataInboundHandler;
 
     private static NettyClientService instance;
 
-    private NettyClientService(Callback incomingData) {
-        this.incomingData = incomingData;
+    private NettyClientService() {
     }
 
-    public static NettyClientService getInstance(Callback incomingData) {
+    public static NettyClientService getInstance() {
         if (instance == null) {
-            instance = new NettyClientService(incomingData);
+            instance = new NettyClientService();
         }
         return instance;
     }
@@ -38,6 +37,7 @@ public class NettyClientService implements ClientService {
     @Override
     public void startClient() {
         Thread networkThread = new Thread(() -> {
+            dataInboundHandler = new DataInboundHandler();
             NioEventLoopGroup workerGroup = new NioEventLoopGroup();
             try {
                 Bootstrap bootstrap = new Bootstrap();
@@ -50,7 +50,7 @@ public class NettyClientService implements ClientService {
                                 socketChannel.pipeline()
                                         .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                         .addLast(new ObjectEncoder())
-                                        .addLast(new DataInboundHandler(incomingData));
+                                        .addLast(dataInboundHandler);
 //                                        .addLast(new ChunkedWriteHandler())
 //                                        .addLast(new CommandOutboundHandler());
                             }
@@ -80,7 +80,8 @@ public class NettyClientService implements ClientService {
     }
 
     @Override
-    public void sendCommand(Command command) {
+    public void sendCommand(Command command, Callback callback) {
+        dataInboundHandler.setIncomingData(callback);
         channel.writeAndFlush(command);
     }
 

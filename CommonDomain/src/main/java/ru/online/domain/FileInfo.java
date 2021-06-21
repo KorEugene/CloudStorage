@@ -1,12 +1,13 @@
-package ru.online.cloud.client.model;
+package ru.online.domain;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
-public class FileInfo {
+public class FileInfo implements Serializable {
 
     private String fileName;
     private FileType type;

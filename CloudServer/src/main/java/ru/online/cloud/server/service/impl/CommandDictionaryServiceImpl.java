@@ -4,24 +4,23 @@ import ru.online.domain.Command;
 import ru.online.cloud.server.factory.Factory;
 import ru.online.cloud.server.service.CommandDictionaryService;
 import ru.online.cloud.server.service.CommandService;
+import ru.online.domain.CommandType;
+import ru.online.domain.FileInfo;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CommandDictionaryServiceImpl implements CommandDictionaryService {
 
-    private final Map<String, CommandService> commandDictionary;
+    private final Map<CommandType, CommandService> commandDictionary;
 
     public CommandDictionaryServiceImpl() {
         commandDictionary = Collections.unmodifiableMap(getCommonDictionary());
     }
 
-    private Map<String, CommandService> getCommonDictionary() {
+    private Map<CommandType, CommandService> getCommonDictionary() {
         List<CommandService> commandServices = Factory.getCommandServices();
 
-        Map<String, CommandService> commandDictionary = new HashMap<>();
+        Map<CommandType, CommandService> commandDictionary = new HashMap<>();
         for (CommandService commandService : commandServices) {
             commandDictionary.put(commandService.getCommand(), commandService);
         }
@@ -30,12 +29,14 @@ public class CommandDictionaryServiceImpl implements CommandDictionaryService {
     }
 
     @Override
-    public String processCommand(Command command) {
+    public List<FileInfo> processCommand(Command command) {
+//    public String processCommand(Command command) {
         if (commandDictionary.containsKey(command.getCommandName())) {
             return commandDictionary.get(command.getCommandName()).processCommand(command);
         }
 
-        return "Error command";
+//        return "Error command";
+        return new ArrayList<>();
     }
 
 }

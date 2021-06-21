@@ -12,24 +12,24 @@ public class NettyNetworkService implements NetworkService {
 
     private static NettyNetworkService instance;
 
-    private NettyNetworkService(Callback incomingData) {
-        this.clientService = Factory.getClientService(incomingData);
+    private NettyNetworkService() {
+        this.clientService = Factory.getClientService();
     }
 
-    public static NetworkService getInstance(Callback incomingData) {
+    public static NetworkService getInstance() {
         if (instance == null) {
-            instance = new NettyNetworkService(incomingData);
+            instance = new NettyNetworkService();
         }
         return instance;
     }
 
     @Override
-    public void sendCommand(Command command) {
-        clientService.sendCommand(command);
+    public void sendCommand(Command command, Callback callback) {
+        clientService.sendCommand(command, callback);
     }
 
     @Override
-    public java.lang.String readCommandResult() {
+    public String readCommandResult() {
         return null;
     }
 
