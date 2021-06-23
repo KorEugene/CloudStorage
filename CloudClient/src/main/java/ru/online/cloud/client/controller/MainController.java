@@ -14,6 +14,7 @@ import ru.online.domain.Command;
 import ru.online.domain.CommandType;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -22,6 +23,7 @@ import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,7 @@ public class MainController implements Initializable {
     public TextArea commandResultTextArea;
 
     public NetworkService networkService;
+    private Properties properties;
 
     @FXML
     public Button btnListDirs;
@@ -51,11 +54,22 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
+        loadProperties();
+
         btnDisconnect.setDisable(true);
         createCommandResultHandler();
 
-        initializePanel();
+        initTable(localFiles);
         initCloudView();
+    }
+
+    private void loadProperties() {
+        try (InputStream input = MainController.class.getClassLoader().getResourceAsStream("client.properties")) {
+            properties = new Properties();
+            properties.load(input);
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
     }
 
     private void createCommandResultHandler() {
@@ -93,7 +107,7 @@ public class MainController implements Initializable {
         }
     }
 
-    public void initializePanel() {
+    public void initTable(TableView<FileInfo> table) {
         TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
         fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType().getName()));
 
@@ -123,8 +137,8 @@ public class MainController implements Initializable {
         TableColumn<FileInfo, String> fileDateColumn = new TableColumn<>("Last modified");
         fileDateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(dtf)));
 
-        localFiles.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDateColumn);
-        localFiles.getSortOrder().add(fileTypeColumn);
+        table.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDateColumn);
+        table.getSortOrder().add(fileTypeColumn);
 
         disksBox.getItems().clear();
         for (Path p : FileSystems.getDefault().getRootDirectories()) {
@@ -132,16 +146,16 @@ public class MainController implements Initializable {
         }
         disksBox.getSelectionModel().select(0);
 
-        localFiles.setOnMouseClicked(event -> {
+        table.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                Path path = Paths.get(pathField.getText()).resolve(localFiles.getSelectionModel().getSelectedItem().getFileName());
+                Path path = Paths.get(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFileName());
                 if (Files.isDirectory(path)) {
                     updateList(path);
                 }
             }
         });
 
-        updateList(Paths.get("C:\\Users"));
+        updateList(Paths.get(properties.getProperty("def.directory")));
     }
 
     public void updateList(Path path) {
