@@ -23,10 +23,9 @@
         <VBox HBox.hgrow="ALWAYS" spacing="5.0">
             <HBox spacing="3.0">
                 <ComboBox fx:id="disksBox" onAction="#selectDisk"/>
-                <TextField fx:id="pathField" editable="false" HBox.hgrow="ALWAYS"/>
-                <Button text="Up" onAction="#btnPathUp"/>
+                <TextField fx:id="localPathField" editable="false" HBox.hgrow="ALWAYS"/>
+                <Button text="Up" onAction="#btnLocalPathUp"/>
             </HBox>
-
             <TableView fx:id="localFiles" VBox.vgrow="ALWAYS"/>
         </VBox>
 
@@ -50,23 +49,19 @@
 
         <VBox HBox.hgrow="ALWAYS" spacing="5.0">
             <HBox spacing="3.0">
-<!--                <ComboBox/>-->
-                <TextField editable="false" HBox.hgrow="ALWAYS"/>
-                <Button text="Up"/>
+                <TextField fx:id="cloudPathField" editable="false" HBox.hgrow="ALWAYS"/>
+                <Button text="Up" onAction="#btnCloudPathUp"/>
             </HBox>
-
             <TableView fx:id="cloudFiles" VBox.vgrow="ALWAYS"/>
-            <TextArea fx:id="commandResultTextArea"/>
+            <HBox spacing="5">
+                <Button fx:id="btnConnect" text="Connect" onAction="#connectToServer"/>
+                <Button fx:id="btnDisconnect" text="Disconnect" onAction="#disconnectFromServer"/>
+                <Button fx:id="btnListDirs" text="List directories" onAction="#listDirs"/>
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+            </HBox>
         </VBox>
-    </HBox>
-
-    <HBox spacing="5">
-        <Button fx:id="btnConnect" text="Connect" onAction="#connectToServer"/>
-        <Button fx:id="btnDisconnect" text="Disconnect" onAction="#disconnectFromServer"/>
-        <Button fx:id="btnListDirs" text="List directories" onAction="#listDirs"/>
-        <padding>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-        </padding>
     </HBox>
 
 </VBox>

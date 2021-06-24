@@ -1,13 +1,13 @@
 package ru.online.cloud.server.core.handler;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import ru.online.domain.Command;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import ru.online.cloud.server.factory.Factory;
 import ru.online.cloud.server.service.CommandDictionaryService;
+import ru.online.domain.Command;
 import ru.online.domain.CommandType;
 
-public class CommandInboundHandler extends SimpleChannelInboundHandler<Command> {
+public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
 
     private CommandDictionaryService dictionaryService;
 
@@ -21,10 +21,12 @@ public class CommandInboundHandler extends SimpleChannelInboundHandler<Command> 
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Command command) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        Command command = (Command) msg;
         System.out.println("Получена команда: " + command.getCommandName());
 //        java.lang.String result = dictionaryService.processCommand(command);
-        Command result = new Command(CommandType.LS_RESULT, new Object[]{dictionaryService.processCommand(command)});
+//        Command result = new Command(CommandType.LS_CURRENT, new Object[]{dictionaryService.processCommand(command)});
+        Command result = dictionaryService.processCommand(command);
 //        Command result = new Command(CommandType.LS_RESULT, new String[]{dictionaryService.processCommand(command)});
         ctx.writeAndFlush(result);
     }

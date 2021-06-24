@@ -1,13 +1,15 @@
 package ru.online.cloud.server.service.impl;
 
-import ru.online.domain.Command;
 import ru.online.cloud.server.factory.Factory;
 import ru.online.cloud.server.service.CommandDictionaryService;
 import ru.online.cloud.server.service.CommandService;
+import ru.online.domain.Command;
 import ru.online.domain.CommandType;
-import ru.online.domain.FileInfo;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CommandDictionaryServiceImpl implements CommandDictionaryService {
 
@@ -29,14 +31,12 @@ public class CommandDictionaryServiceImpl implements CommandDictionaryService {
     }
 
     @Override
-    public List<FileInfo> processCommand(Command command) {
-//    public String processCommand(Command command) {
+    public Command processCommand(Command command) {
         if (commandDictionary.containsKey(command.getCommandName())) {
             return commandDictionary.get(command.getCommandName()).processCommand(command);
         }
 
-//        return "Error command";
-        return new ArrayList<>();
+        return new Command();
     }
 
 }

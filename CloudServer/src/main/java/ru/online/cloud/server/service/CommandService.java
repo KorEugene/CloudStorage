@@ -8,7 +8,9 @@ import java.util.List;
 
 public interface CommandService {
 
-    List<FileInfo> processCommand(Command command);
+    Command processCommand(Command command);
+
+//    List<FileInfo> processCommand(Command command);
 
 //    String processCommand(Command command);
 

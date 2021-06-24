@@ -2,7 +2,13 @@ package ru.online.domain;
 
 public enum CommandType {
 
-    LS,
-    LS_RESULT
+    LS_CURRENT,
+    LS_PARENT,
+    LS_CHILD,
+    MK_DIR,
+    REM_DIR,
+    UPLOAD,
+    DOWNLOAD
+
 
 }

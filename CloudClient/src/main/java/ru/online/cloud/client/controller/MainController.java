@@ -12,6 +12,7 @@ import ru.online.domain.FileInfo;
 import ru.online.cloud.client.service.NetworkService;
 import ru.online.domain.Command;
 import ru.online.domain.CommandType;
+import ru.online.domain.FileType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -33,6 +33,8 @@ public class MainController implements Initializable {
     public TextArea commandResultTextArea;
 
     public NetworkService networkService;
+
+    private String cloudPath;
     private Properties properties;
 
     @FXML
@@ -43,7 +45,9 @@ public class MainController implements Initializable {
     @FXML
     private Button btnDisconnect;
     @FXML
-    private TextField pathField;
+    private TextField localPathField;
+    @FXML
+    private TextField cloudPathField;
     @FXML
     private ComboBox<String> disksBox;
     @FXML
@@ -55,12 +59,12 @@ public class MainController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         loadProperties();
-
         btnDisconnect.setDisable(true);
-        createCommandResultHandler();
 
-        initTable(localFiles);
-        initCloudView();
+        initLocalFilePanel();
+        initCloudFilePanel();
+
+
     }
 
     private void loadProperties() {
@@ -95,19 +99,37 @@ public class MainController implements Initializable {
         Platform.exit();
     }
 
-
     public void btnCloseApp() {
         shutdown();
     }
 
-    public void btnPathUp() {
-        Path upperPath = Paths.get(pathField.getText()).getParent();
+    public void btnLocalPathUp() {
+        Path upperPath = Paths.get(localPathField.getText()).getParent();
         if (upperPath != null) {
-            updateList(upperPath);
+            updateList(upperPath, localFiles, localPathField);
         }
     }
 
-    public void initTable(TableView<FileInfo> table) {
+    public void btnCloudPathUp(ActionEvent actionEvent) {
+        //TODO
+        Path upperPath = Paths.get(cloudPathField.getText()).getParent();
+        if (upperPath != null) {
+//            updateList(upperPath, cloudFiles, cloudPathField);
+            updateCloudList(upperPath, cloudFiles, cloudPathField);
+        }
+    }
+
+    private void initLocalFilePanel() {
+        initTableView(localFiles, localPathField);
+        initLocalDisks();
+        updateList(Paths.get(properties.getProperty("def.directory")), localFiles, localPathField);
+    }
+
+    private void initCloudFilePanel() {
+        initTableView(cloudFiles, cloudPathField);
+    }
+
+    private void initTableView(TableView<FileInfo> table, TextField pathField) {
         TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
         fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType().getName()));
 
@@ -140,30 +162,66 @@ public class MainController implements Initializable {
         table.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDateColumn);
         table.getSortOrder().add(fileTypeColumn);
 
+        table.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                Path path = Paths.get(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFileName());
+                FileType type = table.getSelectionModel().getSelectedItem().getType();
+                if (Files.isDirectory(path) || type == FileType.DIRECTORY) {
+                    if (table == localFiles) {
+                        updateList(path, table, pathField);
+                    } else {
+//                        StringBuilder sb = new StringBuilder(Paths.get(pathField.getText()).normalize().toString());
+//                        sb.append("\\").append(table.getSelectionModel().getSelectedItem().getFileName());
+//                        listChild(sb.toString());
+                        listChild(cloudPath + "/" + table.getSelectionModel().getSelectedItem().getFileName());
+                    }
+                }
+            }
+        });
+    }
+
+    private void listChild(String path) {
+        Command command = new Command(CommandType.LS_CURRENT, path, new Object[]{});
+        networkService.sendCommand(command, (result) -> {
+            Platform.runLater(() -> {
+                cloudFiles.getItems().clear();
+                cloudFiles.getItems().addAll((List<FileInfo>) result.getArgs()[0]);
+                cloudFiles.sort();
+                cloudPathField.clear();
+                cloudPathField.setText(result.getPath());
+            });
+
+        });
+    }
+
+    private void initLocalDisks() {
         disksBox.getItems().clear();
         for (Path p : FileSystems.getDefault().getRootDirectories()) {
             disksBox.getItems().add(p.toString());
         }
         disksBox.getSelectionModel().select(0);
-
-        table.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
-                Path path = Paths.get(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFileName());
-                if (Files.isDirectory(path)) {
-                    updateList(path);
-                }
-            }
-        });
-
-        updateList(Paths.get(properties.getProperty("def.directory")));
     }
 
-    public void updateList(Path path) {
+    public void updateList(Path path, TableView<FileInfo> table, TextField pathField) {
         try {
             pathField.setText(path.normalize().toAbsolutePath().toString());
-            localFiles.getItems().clear();
-            localFiles.getItems().addAll(Files.list(path).map(FileInfo::new).collect(Collectors.toList()));
-            localFiles.sort();
+            table.getItems().clear();
+            table.getItems().addAll(Files.list(path).map(FileInfo::new).collect(Collectors.toList()));
+            table.sort();
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Unable update list of files", ButtonType.OK);
+            alert.showAndWait();
+        }
+    }
+
+    public void updateCloudList(Path path, TableView<FileInfo> table, TextField pathField) {
+        try {
+//            Path base = Paths.get(".");
+//            pathField.setText(base.normalize().relativize(path).normalize().toString());
+            pathField.setText(path.normalize().toAbsolutePath().toString());
+            table.getItems().clear();
+            table.getItems().addAll(Files.list(path).map(FileInfo::new).collect(Collectors.toList()));
+            table.sort();
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.WARNING, "Unable update list of files", ButtonType.OK);
             alert.showAndWait();
@@ -172,7 +230,7 @@ public class MainController implements Initializable {
 
     public void selectDisk(ActionEvent actionEvent) {
         ComboBox<String> element = (ComboBox<String>) actionEvent.getSource();
-        updateList(Paths.get(element.getSelectionModel().getSelectedItem()));
+        updateList(Paths.get(element.getSelectionModel().getSelectedItem()), localFiles, localPathField);
     }
 
     public String getSelectedFilename() {
@@ -183,7 +241,7 @@ public class MainController implements Initializable {
     }
 
     public String getCurrentPath() {
-        return pathField.getText();
+        return localPathField.getText();
     }
 
     public void connectToServer() {
@@ -199,6 +257,7 @@ public class MainController implements Initializable {
             networkService.closeConnection();
         }
         cloudFiles.getItems().clear();
+        cloudPathField.clear();
         switchButtonsState();
     }
 
@@ -208,51 +267,20 @@ public class MainController implements Initializable {
     }
 
     public void listDirs() {
-        Command command = new Command(CommandType.LS, new String[]{"."});
+        Command command = new Command(CommandType.LS_CURRENT, "CloudServer/storage", new Object[]{});
         networkService.sendCommand(command, (result) -> {
 //            commandResultTextArea.clear();
 //            commandResultTextArea.appendText((String) result.getArgs()[0]);
             Platform.runLater(() -> {
                 cloudFiles.getItems().clear();
-                List<FileInfo> fileInfoList = (List<FileInfo>) result.getArgs()[0];
-                cloudFiles.getItems().addAll(fileInfoList);
+                cloudFiles.getItems().addAll((List<FileInfo>) result.getArgs()[0]);
                 cloudFiles.sort();
+                cloudPath = result.getPath();
+                cloudPathField.setText(result.getPath());
             });
 
         });
     }
 
-    private void initCloudView() {
-        TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
-        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType().getName()));
 
-        TableColumn<FileInfo, String> fileNameColumn = new TableColumn<>("Name");
-        fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileName()));
-
-        TableColumn<FileInfo, Long> fileSizeColumn = new TableColumn<>("Size");
-        fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getSize()));
-        fileSizeColumn.setCellFactory(column -> new TableCell<FileInfo, Long>() {
-            @Override
-            protected void updateItem(Long item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    String text = String.format("%,d bytes", item);
-                    if (item == -1L) {
-                        text = "[DIR]";
-                    }
-                    setText(text);
-                }
-            }
-        });
-
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        TableColumn<FileInfo, String> fileDateColumn = new TableColumn<>("Last modified");
-        fileDateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(dtf)));
-
-        cloudFiles.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDateColumn);
-        cloudFiles.getSortOrder().add(fileTypeColumn);
-    }
 }
