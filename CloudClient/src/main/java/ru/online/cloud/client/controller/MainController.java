@@ -14,6 +14,7 @@ import ru.online.domain.Command;
 import ru.online.domain.CommandType;
 import ru.online.domain.FileType;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -170,18 +171,15 @@ public class MainController implements Initializable {
                     if (table == localFiles) {
                         updateList(path, table, pathField);
                     } else {
-//                        StringBuilder sb = new StringBuilder(Paths.get(pathField.getText()).normalize().toString());
-//                        sb.append("\\").append(table.getSelectionModel().getSelectedItem().getFileName());
-//                        listChild(sb.toString());
-                        listChild(cloudPath + "/" + table.getSelectionModel().getSelectedItem().getFileName());
+                        getChildDir(cloudPath + File.separator + table.getSelectionModel().getSelectedItem().getFileName());
                     }
                 }
             }
         });
     }
 
-    private void listChild(String path) {
-        Command command = new Command(CommandType.LS_CURRENT, path, new Object[]{});
+    private void getChildDir(String path) {
+        Command command = new Command(CommandType.LS_CHILD, path, new Object[]{});
         networkService.sendCommand(command, (result) -> {
             Platform.runLater(() -> {
                 cloudFiles.getItems().clear();
@@ -189,6 +187,7 @@ public class MainController implements Initializable {
                 cloudFiles.sort();
                 cloudPathField.clear();
                 cloudPathField.setText(result.getPath());
+                cloudPath = result.getPath();
             });
 
         });
@@ -216,6 +215,18 @@ public class MainController implements Initializable {
 
     public void updateCloudList(Path path, TableView<FileInfo> table, TextField pathField) {
         try {
+            Command command = new Command(CommandType.LS_PARENT, path.toString(), new Object[]{});
+            networkService.sendCommand(command, (result) -> {
+                Platform.runLater(() -> {
+                    table.getItems().clear();
+                    table.getItems().addAll((List<FileInfo>) result.getArgs()[0]);
+                    table.sort();
+                    pathField.clear();
+                    pathField.setText(result.getPath());
+                    cloudPath = result.getPath();
+                });
+
+            });
 //            Path base = Paths.get(".");
 //            pathField.setText(base.normalize().relativize(path).normalize().toString());
             pathField.setText(path.normalize().toAbsolutePath().toString());
@@ -267,7 +278,8 @@ public class MainController implements Initializable {
     }
 
     public void listDirs() {
-        Command command = new Command(CommandType.LS_CURRENT, "CloudServer/storage", new Object[]{});
+//        Command command = new Command(CommandType.LS_CURRENT, "CloudServer/storage", new Object[]{});
+        Command command = new Command(CommandType.LS_CURRENT, "C:\\GeekUniversity\\CloudStorage\\CloudServer\\storage", new Object[]{});
         networkService.sendCommand(command, (result) -> {
 //            commandResultTextArea.clear();
 //            commandResultTextArea.appendText((String) result.getArgs()[0]);

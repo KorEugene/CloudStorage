@@ -5,7 +5,9 @@ import ru.online.cloud.server.service.CommandService;
 import ru.online.cloud.server.service.ServerService;
 import ru.online.cloud.server.service.impl.CommandDictionaryServiceImpl;
 import ru.online.cloud.server.core.NettyServerService;
+import ru.online.cloud.server.service.impl.command.ViewFilesInChildDirCommand;
 import ru.online.cloud.server.service.impl.command.ViewFilesInDirCommand;
+import ru.online.cloud.server.service.impl.command.ViewFilesInParentDirCommand;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +23,7 @@ public class Factory {
     }
 
     public static List<CommandService> getCommandServices() {
-        return Arrays.asList(new ViewFilesInDirCommand());
+        return Arrays.asList(new ViewFilesInDirCommand(), new ViewFilesInParentDirCommand(), new ViewFilesInChildDirCommand());
     }
 
 }
