@@ -35,7 +35,6 @@ public class MainController implements Initializable {
 
     public NetworkService networkService;
 
-    private String cloudPath;
     private Properties properties;
 
     @FXML
@@ -107,23 +106,21 @@ public class MainController implements Initializable {
     public void btnLocalPathUp() {
         Path upperPath = Paths.get(localPathField.getText()).getParent();
         if (upperPath != null) {
-            updateList(upperPath, localFiles, localPathField);
+            updateList(CommandType.LS, upperPath, localFiles, localPathField);
         }
     }
 
-    public void btnCloudPathUp(ActionEvent actionEvent) {
-        //TODO
+    public void btnCloudPathUp() {
         Path upperPath = Paths.get(cloudPathField.getText()).getParent();
         if (upperPath != null) {
-//            updateList(upperPath, cloudFiles, cloudPathField);
-            updateCloudList(upperPath, cloudFiles, cloudPathField);
+            updateList(CommandType.LS, upperPath, cloudFiles, cloudPathField);
         }
     }
 
     private void initLocalFilePanel() {
         initTableView(localFiles, localPathField);
         initLocalDisks();
-        updateList(Paths.get(properties.getProperty("def.directory")), localFiles, localPathField);
+        updateList(CommandType.LS, Paths.get(properties.getProperty("def.directory")), localFiles, localPathField);
     }
 
     private void initCloudFilePanel() {
@@ -165,31 +162,12 @@ public class MainController implements Initializable {
 
         table.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                Path path = Paths.get(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFileName());
+                Path path = Paths.get(getCurrentPath(pathField) + File.separator + getSelectedFilename(table));
                 FileType type = table.getSelectionModel().getSelectedItem().getType();
                 if (Files.isDirectory(path) || type == FileType.DIRECTORY) {
-                    if (table == localFiles) {
-                        updateList(path, table, pathField);
-                    } else {
-                        getChildDir(cloudPath + File.separator + table.getSelectionModel().getSelectedItem().getFileName());
-                    }
+                    updateList(CommandType.LS, path, table, pathField);
                 }
             }
-        });
-    }
-
-    private void getChildDir(String path) {
-        Command command = new Command(CommandType.LS_CHILD, path, new Object[]{});
-        networkService.sendCommand(command, (result) -> {
-            Platform.runLater(() -> {
-                cloudFiles.getItems().clear();
-                cloudFiles.getItems().addAll((List<FileInfo>) result.getArgs()[0]);
-                cloudFiles.sort();
-                cloudPathField.clear();
-                cloudPathField.setText(result.getPath());
-                cloudPath = result.getPath();
-            });
-
         });
     }
 
@@ -201,21 +179,9 @@ public class MainController implements Initializable {
         disksBox.getSelectionModel().select(0);
     }
 
-    public void updateList(Path path, TableView<FileInfo> table, TextField pathField) {
-        try {
-            pathField.setText(path.normalize().toAbsolutePath().toString());
-            table.getItems().clear();
-            table.getItems().addAll(Files.list(path).map(FileInfo::new).collect(Collectors.toList()));
-            table.sort();
-        } catch (IOException e) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Unable update list of files", ButtonType.OK);
-            alert.showAndWait();
-        }
-    }
-
-    public void updateCloudList(Path path, TableView<FileInfo> table, TextField pathField) {
-        try {
-            Command command = new Command(CommandType.LS_PARENT, path.toString(), new Object[]{});
+    public void updateList(CommandType type, Path path, TableView<FileInfo> table, TextField pathField) {
+        if (table == cloudFiles) {
+            Command command = new Command(type, path.toString(), new Object[]{});
             networkService.sendCommand(command, (result) -> {
                 Platform.runLater(() -> {
                     table.getItems().clear();
@@ -223,12 +189,10 @@ public class MainController implements Initializable {
                     table.sort();
                     pathField.clear();
                     pathField.setText(result.getPath());
-                    cloudPath = result.getPath();
                 });
-
             });
-//            Path base = Paths.get(".");
-//            pathField.setText(base.normalize().relativize(path).normalize().toString());
+        }
+        try {
             pathField.setText(path.normalize().toAbsolutePath().toString());
             table.getItems().clear();
             table.getItems().addAll(Files.list(path).map(FileInfo::new).collect(Collectors.toList()));
@@ -241,18 +205,18 @@ public class MainController implements Initializable {
 
     public void selectDisk(ActionEvent actionEvent) {
         ComboBox<String> element = (ComboBox<String>) actionEvent.getSource();
-        updateList(Paths.get(element.getSelectionModel().getSelectedItem()), localFiles, localPathField);
+        updateList(CommandType.LS, Paths.get(element.getSelectionModel().getSelectedItem()), localFiles, localPathField);
     }
 
-    public String getSelectedFilename() {
-        if (!localFiles.isFocused()) {
+    public String getSelectedFilename(TableView<FileInfo> tableView) {
+        if (!tableView.isFocused()) {
             return null;
         }
-        return localFiles.getSelectionModel().getSelectedItem().getFileName();
+        return tableView.getSelectionModel().getSelectedItem().getFileName();
     }
 
-    public String getCurrentPath() {
-        return localPathField.getText();
+    public String getCurrentPath(TextField pathField) {
+        return pathField.getText();
     }
 
     public void connectToServer() {
@@ -278,16 +242,12 @@ public class MainController implements Initializable {
     }
 
     public void listDirs() {
-//        Command command = new Command(CommandType.LS_CURRENT, "CloudServer/storage", new Object[]{});
-        Command command = new Command(CommandType.LS_CURRENT, "C:\\GeekUniversity\\CloudStorage\\CloudServer\\storage", new Object[]{});
+        Command command = new Command(CommandType.LS, properties.getProperty("cld.directory"), new Object[]{});
         networkService.sendCommand(command, (result) -> {
-//            commandResultTextArea.clear();
-//            commandResultTextArea.appendText((String) result.getArgs()[0]);
             Platform.runLater(() -> {
                 cloudFiles.getItems().clear();
                 cloudFiles.getItems().addAll((List<FileInfo>) result.getArgs()[0]);
                 cloudFiles.sort();
-                cloudPath = result.getPath();
                 cloudPathField.setText(result.getPath());
             });
 

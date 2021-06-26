@@ -13,7 +13,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class Command implements Serializable {
 
-//    private String commandName;
     private CommandType commandName;
     private String path;
     private Object[] args;

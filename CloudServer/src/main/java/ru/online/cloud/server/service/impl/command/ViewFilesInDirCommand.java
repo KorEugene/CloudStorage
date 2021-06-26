@@ -37,7 +37,6 @@ public class ViewFilesInDirCommand implements CommandService {
 
     @Override
     public CommandType getCommand() {
-        return CommandType.LS_CURRENT;
+        return CommandType.LS;
     }
-
 }
