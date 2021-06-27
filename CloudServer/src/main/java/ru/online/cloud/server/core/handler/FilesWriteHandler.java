@@ -8,6 +8,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import ru.online.domain.command.Command;
 import ru.online.domain.command.CommandType;
 
@@ -32,7 +33,7 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void checkFileIsExists(String fileName) {
-        file = new File("C:\\GeekBrainsUniversity\\java\\CloudStorage\\CloudServer\\storage" + File.separator + fileName);
+        file = new File("CloudServer\\storage" + File.separator + fileName);
         if (file.exists()) {
             file.delete();
         }
@@ -81,6 +82,9 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
         }
         if (p.get("command") == null) {
             p.addLast("command", new CommandInboundHandler(channel));
+        }
+        if (p.get("chunkWr") == null) {
+            p.addLast("chunkWr", new ChunkedWriteHandler());
         }
         System.out.println(channel.pipeline());
         channel.writeAndFlush(new Command(CommandType.UPLOAD_COMPLETE, fileName, new Object[]{}));

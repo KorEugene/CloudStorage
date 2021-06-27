@@ -3,6 +3,7 @@ package ru.online.cloud.client.core;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -11,12 +12,11 @@ import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.handler.stream.ChunkedWriteHandler;
-import ru.online.cloud.client.core.handler.FilesWriteHandler;
 import ru.online.cloud.client.core.handler.DataInboundHandler;
+import ru.online.cloud.client.core.handler.FilesWriteHandler;
 import ru.online.cloud.client.service.Callback;
 import ru.online.cloud.client.service.ClientService;
 import ru.online.domain.command.Command;
-import ru.online.domain.command.CommandType;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,10 +55,10 @@ public class NettyClientService implements ClientService {
                             protected void initChannel(SocketChannel socketChannel) {
                                 channel = socketChannel;
                                 socketChannel.pipeline()
-                                        .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
-                                        .addLast(new ObjectEncoder())
-                                        .addLast(dataInboundHandler)
-                                        .addLast(new ChunkedWriteHandler());
+                                        .addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
+                                        .addLast("encoder", new ObjectEncoder())
+                                        .addLast("dataInHandler", dataInboundHandler)
+                                        .addLast("chunkWr", new ChunkedWriteHandler());
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
@@ -87,8 +87,19 @@ public class NettyClientService implements ClientService {
 
     @Override
     public void sendCommand(Command command, Callback callback) {
+
         dataInboundHandler.setIncomingData(callback);
         channel.writeAndFlush(command);
+
+        System.out.println("Отправлена команда: " + command.getCommandName());
+    }
+
+    @Override
+    public void downloadFile(Command command, Callback callback) {
+        channel.writeAndFlush(command);
+//        switchToFileDownloadPipeline(channel, (String) command.getArgs()[0], (long) command.getArgs()[1], (String) command.getArgs()[2], callback, dataInboundHandler);
+        switchToFileDownloadPipeline(channel, (String) command.getArgs()[0], (long) command.getArgs()[1], (String) command.getArgs()[2], callback);
+        System.out.println("Начат приём файла");
     }
 
     @Override
@@ -99,5 +110,27 @@ public class NettyClientService implements ClientService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+//    private void switchToFileDownloadPipeline(SocketChannel channel, String fileName, long fileSize, String path, Callback callback, DataInboundHandler dataInboundHandler) {
+    private void switchToFileDownloadPipeline(SocketChannel channel, String fileName, long fileSize, String path, Callback callback) {
+        ChannelPipeline p = channel.pipeline();
+        if (p.get("decoder") != null) {
+            p.remove("decoder");
+        }
+        if (p.get("encoder") != null) {
+            p.remove("encoder");
+        }
+//        if (p.get("dataInHandler") != null) {
+//            p.remove("dataInHandler");
+//        }
+        if (p.get("chunkWr") == null) {
+            p.addLast("chunkWr", new ChunkedWriteHandler());
+        }
+        if (p.get("fileWr") == null) {
+//            p.addLast("fileWr", new FilesWriteHandler(channel, fileName, fileSize, path, callback, dataInboundHandler));
+            p.addLast("fileWr", new FilesWriteHandler(channel, fileName, fileSize, path, callback));
+        }
+        System.out.println(channel.pipeline());
     }
 }

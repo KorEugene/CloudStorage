@@ -173,15 +173,16 @@ public class MainController implements Initializable {
                     pathField.setText(result.getPath());
                 });
             });
-        }
-        try {
-            pathField.setText(path.normalize().toAbsolutePath().toString());
-            table.getItems().clear();
-            table.getItems().addAll(Files.list(path).map(FileInfo::new).collect(Collectors.toList()));
-            table.sort();
-        } catch (IOException e) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Unable update list of files", ButtonType.OK);
-            alert.showAndWait();
+        } else {
+            try {
+                pathField.setText(path.normalize().toAbsolutePath().toString());
+                table.getItems().clear();
+                table.getItems().addAll(Files.list(path).map(FileInfo::new).collect(Collectors.toList()));
+                table.sort();
+            } catch (IOException e) {
+                Alert alert = new Alert(Alert.AlertType.WARNING, "Unable update list of files", ButtonType.OK);
+                alert.showAndWait();
+            }
         }
     }
 
@@ -215,6 +216,7 @@ public class MainController implements Initializable {
         }
         cloudFiles.getItems().clear();
         cloudPathField.clear();
+        switchInterfaceStateToEnabled();
         switchButtonsState();
     }
 
@@ -236,12 +238,20 @@ public class MainController implements Initializable {
         });
     }
 
-    private void switchInterfaceState() {
-        btnListDirs.setDisable(!btnListDirs.isDisabled());
-        cloudPathField.setDisable(!cloudPathField.isDisabled());
-        cloudFiles.setDisable(!cloudFiles.isDisable());
-        btnUpload.setDisable(!btnUpload.isDisabled());
-        btnDownload.setDisable(!btnDownload.isDisabled());
+    private void switchInterfaceStateToEnabled() {
+        btnListDirs.setDisable(false);
+        cloudPathField.setDisable(false);
+        cloudFiles.setDisable(false);
+        btnUpload.setDisable(false);
+        btnDownload.setDisable(false);
+    }
+
+    private void switchInterfaceStateToDisabled() {
+        btnListDirs.setDisable(true);
+        cloudPathField.setDisable(true);
+        cloudFiles.setDisable(true);
+        btnUpload.setDisable(true);
+        btnDownload.setDisable(true);
     }
 
     public void btnUploadCommand() {
@@ -252,20 +262,40 @@ public class MainController implements Initializable {
         }
         System.out.println("Upload: " + file + " file size: " + file.length());
         Command command = new Command(CommandType.UPLOAD, null, new Object[]{getSelectedFilename(localFiles), file.length()});
+        if (command.getArgs()[0] == null) {
+            return;
+        }
         networkService.sendCommand(command, (result) -> {
             System.out.println(result.getCommandName());
             command.setPath(path);
-            switchInterfaceState();
+            switchInterfaceStateToDisabled();
             networkService.sendFile(command, (res) -> {
                 if (res.getCommandName() == CommandType.UPLOAD_COMPLETE) {
                     listDirs();
-                    switchInterfaceState();
+                    switchInterfaceStateToEnabled();
                 }
             });
         });
     }
 
     public void btnDownloadCommand() {
-        System.out.println("Download: " + getSelectedFilename(cloudFiles));
+        String path = getCurrentPath(cloudPathField) + File.separator + getSelectedFilename(cloudFiles);
+        FileType type = cloudFiles.getSelectionModel().getSelectedItem().getType();
+        if (type == FileType.DIRECTORY) {
+            return;
+        }
+        File file = new File(path);
+        System.out.println("Download: " + file + " file size: " + file.length());
+        Command command = new Command(CommandType.DOWNLOAD, path, new Object[]{getSelectedFilename(cloudFiles), file.length(), getCurrentPath(localPathField)});
+        switchInterfaceStateToDisabled();
+        networkService.sendDownloadCommand(command, (result) -> {
+            System.out.println(result.getCommandName());
+            if (result.getCommandName() == CommandType.DOWNLOAD_COMPLETE) {
+                switchInterfaceStateToEnabled();
+            }
+
+        });
+
+
     }
 }

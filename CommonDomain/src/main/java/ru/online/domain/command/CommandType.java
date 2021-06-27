@@ -6,9 +6,9 @@ public enum CommandType {
     MK_DIR,
     REM_DIR,
     UPLOAD,
-    READY_UPLOAD,
     UPLOAD_COMPLETE,
-    DOWNLOAD
+    DOWNLOAD,
+    DOWNLOAD_COMPLETE
 
 
 }

@@ -10,6 +10,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import ru.online.cloud.server.core.handler.CommandInboundHandler;
 import ru.online.cloud.server.service.ServerService;
 
@@ -41,8 +42,8 @@ public class NettyServerService implements ServerService {
                         channel.pipeline()
                                 .addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                 .addLast("encoder", new ObjectEncoder())
-                                .addLast("command", new CommandInboundHandler(channel));
-//                                .addLast(new ChunkedWriteHandler())
+                                .addLast("command", new CommandInboundHandler(channel))
+                                .addLast("chunkWr",new ChunkedWriteHandler());
 //                                .addLast(new FilesWriteHandler());
 
                     }
