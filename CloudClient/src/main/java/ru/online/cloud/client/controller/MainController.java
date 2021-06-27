@@ -37,6 +37,10 @@ public class MainController implements Initializable {
     public Button btnListDirs;
 
     @FXML
+    public Button btnUpload;
+    @FXML
+    public Button btnDownload;
+    @FXML
     private Button btnConnect;
     @FXML
     private Button btnDisconnect;
@@ -232,6 +236,13 @@ public class MainController implements Initializable {
         });
     }
 
+    private void switchInterfaceState() {
+        btnListDirs.setDisable(!btnListDirs.isDisabled());
+        cloudPathField.setDisable(!cloudPathField.isDisabled());
+        cloudFiles.setDisable(!cloudFiles.isDisable());
+        btnUpload.setDisable(!btnUpload.isDisabled());
+        btnDownload.setDisable(!btnDownload.isDisabled());
+    }
 
     public void btnUploadCommand() {
         String path = getCurrentPath(localPathField) + File.separator + getSelectedFilename(localFiles);
@@ -244,7 +255,13 @@ public class MainController implements Initializable {
         networkService.sendCommand(command, (result) -> {
             System.out.println(result.getCommandName());
             command.setPath(path);
-            networkService.sendFile(command);
+            switchInterfaceState();
+            networkService.sendFile(command, (res) -> {
+                if (res.getCommandName() == CommandType.UPLOAD_COMPLETE) {
+                    listDirs();
+                    switchInterfaceState();
+                }
+            });
         });
     }
 

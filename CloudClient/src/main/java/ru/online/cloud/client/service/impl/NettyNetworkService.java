@@ -29,8 +29,8 @@ public class NettyNetworkService implements NetworkService {
     }
 
     @Override
-    public void sendFile(Command command) {
-        clientService.sendFile(command);
+    public void sendFile(Command command, Callback callback) {
+        clientService.sendFile(command, callback);
     }
 
     @Override

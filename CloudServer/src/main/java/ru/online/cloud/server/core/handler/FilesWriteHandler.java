@@ -56,11 +56,14 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
 
         if (fileSize == 0) {
             switchToCommandPipeline(channel);
-            ctx.writeAndFlush(new Command(CommandType.UPLOAD_COMPLETE, fileName, new Object[]{}));
         }
     }
 
-
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        System.out.println(cause.getMessage());
+        switchToCommandPipeline(channel);
+    }
 
     private void switchToCommandPipeline(SocketChannel channel) {
         ChannelPipeline p = channel.pipeline();
@@ -80,6 +83,7 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
             p.addLast("command", new CommandInboundHandler(channel));
         }
         System.out.println(channel.pipeline());
+        channel.writeAndFlush(new Command(CommandType.UPLOAD_COMPLETE, fileName, new Object[]{}));
     }
 
 

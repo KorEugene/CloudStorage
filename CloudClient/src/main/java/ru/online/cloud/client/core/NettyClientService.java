@@ -92,9 +92,10 @@ public class NettyClientService implements ClientService {
     }
 
     @Override
-    public void sendFile(Command command) {
+    public void sendFile(Command command, Callback callback) {
         try {
             channel.writeAndFlush(new ChunkedFile(new File(command.getPath())));
+            dataInboundHandler.setIncomingData(callback);
         } catch (IOException e) {
             e.printStackTrace();
         }
