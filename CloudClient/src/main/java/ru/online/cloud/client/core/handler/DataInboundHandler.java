@@ -4,7 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.Setter;
 import ru.online.cloud.client.service.Callback;
-import ru.online.domain.Command;
+import ru.online.domain.command.Command;
 
 public class DataInboundHandler extends SimpleChannelInboundHandler<Command> {
 

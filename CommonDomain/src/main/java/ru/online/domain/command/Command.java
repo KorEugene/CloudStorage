@@ -1,4 +1,4 @@
-package ru.online.domain;
+package ru.online.domain.command;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

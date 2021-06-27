@@ -1,8 +1,8 @@
 package ru.online.cloud.server.service.impl.command;
 
 import ru.online.cloud.server.service.CommandService;
-import ru.online.domain.Command;
-import ru.online.domain.CommandType;
+import ru.online.domain.command.Command;
+import ru.online.domain.command.CommandType;
 import ru.online.domain.FileInfo;
 
 import java.io.IOException;

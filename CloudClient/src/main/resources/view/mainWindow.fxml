@@ -30,7 +30,7 @@
         </VBox>
 
         <VBox alignment="CENTER" spacing="10.0">
-            <Button fx:id="uploadButton">
+            <Button onAction="#btnUploadCommand" focusTraversable="false">
                 <graphic>
                     <ImageView>
                         <Image url="/img/upload_arrow.png"/>
@@ -38,7 +38,7 @@
                 </graphic>
             </Button>
 
-            <Button fx:id="downloadButton">
+            <Button onAction="#btnDownloadCommand" focusTraversable="false">
                 <graphic>
                     <ImageView>
                         <Image url="/img/download_arrow.png"/>

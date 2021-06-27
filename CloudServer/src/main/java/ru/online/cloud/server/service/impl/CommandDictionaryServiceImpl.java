@@ -3,8 +3,8 @@ package ru.online.cloud.server.service.impl;
 import ru.online.cloud.server.factory.Factory;
 import ru.online.cloud.server.service.CommandDictionaryService;
 import ru.online.cloud.server.service.CommandService;
-import ru.online.domain.Command;
-import ru.online.domain.CommandType;
+import ru.online.domain.command.Command;
+import ru.online.domain.command.CommandType;
 
 import java.util.Collections;
 import java.util.HashMap;

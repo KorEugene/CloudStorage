@@ -9,10 +9,17 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
+import io.netty.handler.stream.ChunkedFile;
+import io.netty.handler.stream.ChunkedWriteHandler;
+import ru.online.cloud.client.core.handler.FilesWriteHandler;
 import ru.online.cloud.client.core.handler.DataInboundHandler;
 import ru.online.cloud.client.service.Callback;
 import ru.online.cloud.client.service.ClientService;
-import ru.online.domain.Command;
+import ru.online.domain.command.Command;
+import ru.online.domain.command.CommandType;
+
+import java.io.File;
+import java.io.IOException;
 
 public class NettyClientService implements ClientService {
 
@@ -50,9 +57,8 @@ public class NettyClientService implements ClientService {
                                 socketChannel.pipeline()
                                         .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                         .addLast(new ObjectEncoder())
-                                        .addLast(dataInboundHandler);
-//                                        .addLast(new ChunkedWriteHandler())
-//                                        .addLast(new CommandOutboundHandler());
+                                        .addLast(dataInboundHandler)
+                                        .addLast(new ChunkedWriteHandler());
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
@@ -85,5 +91,12 @@ public class NettyClientService implements ClientService {
         channel.writeAndFlush(command);
     }
 
-
+    @Override
+    public void sendFile(Command command) {
+        try {
+            channel.writeAndFlush(new ChunkedFile(new File(command.getPath())));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

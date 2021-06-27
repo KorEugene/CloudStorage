@@ -8,11 +8,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import ru.online.cloud.client.factory.Factory;
-import ru.online.domain.FileInfo;
 import ru.online.cloud.client.service.NetworkService;
-import ru.online.domain.Command;
-import ru.online.domain.CommandType;
+import ru.online.domain.FileInfo;
 import ru.online.domain.FileType;
+import ru.online.domain.command.Command;
+import ru.online.domain.command.CommandType;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,11 +30,7 @@ import java.util.stream.Collectors;
 
 public class MainController implements Initializable {
 
-    public TextField commandTextField;
-    public TextArea commandResultTextArea;
-
     public NetworkService networkService;
-
     private Properties properties;
 
     @FXML
@@ -74,24 +70,6 @@ public class MainController implements Initializable {
         } catch (IOException exception) {
             exception.printStackTrace();
         }
-    }
-
-    private void createCommandResultHandler() {
-//        new Thread(() -> {
-//            while (true) {
-//                String resultCommand = networkService.readCommandResult();
-//                Platform.runLater(() -> commandResultTextArea.appendText(resultCommand + System.lineSeparator()));
-//            }
-//        }).start();
-    }
-
-    public void sendCommand(ActionEvent actionEvent) {
-//        String[] textCommand = commandTextField.getText().trim().split("\\s");
-//        if (textCommand.length > 1) {
-//            String[] commandArgs = Arrays.copyOfRange(textCommand, 1, textCommand.length);
-//            networkService.sendCommand(new Command(textCommand[0], commandArgs));
-//            commandTextField.clear();
-//        }
     }
 
     public void shutdown() {
@@ -255,4 +233,22 @@ public class MainController implements Initializable {
     }
 
 
+    public void btnUploadCommand() {
+        String path = getCurrentPath(localPathField) + File.separator + getSelectedFilename(localFiles);
+        File file = new File(path);
+        if (file.isDirectory()) {
+            return;
+        }
+        System.out.println("Upload: " + file + " file size: " + file.length());
+        Command command = new Command(CommandType.UPLOAD, null, new Object[]{getSelectedFilename(localFiles), file.length()});
+        networkService.sendCommand(command, (result) -> {
+            System.out.println(result.getCommandName());
+            command.setPath(path);
+            networkService.sendFile(command);
+        });
+    }
+
+    public void btnDownloadCommand() {
+        System.out.println("Download: " + getSelectedFilename(cloudFiles));
+    }
 }

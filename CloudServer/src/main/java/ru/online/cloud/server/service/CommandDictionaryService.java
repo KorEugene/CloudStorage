@@ -1,9 +1,6 @@
 package ru.online.cloud.server.service;
 
-import ru.online.domain.Command;
-import ru.online.domain.FileInfo;
-
-import java.util.List;
+import ru.online.domain.command.Command;
 
 public interface CommandDictionaryService {
 

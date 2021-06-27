@@ -1,13 +1,13 @@
 package ru.online.cloud.client.service;
 
-import ru.online.domain.Command;
+import ru.online.domain.command.Command;
 
 
 public interface NetworkService {
 
     void sendCommand(Command command, Callback callback);
 
-    String readCommandResult();
+    void sendFile(Command command);
 
     void openConnection();
 

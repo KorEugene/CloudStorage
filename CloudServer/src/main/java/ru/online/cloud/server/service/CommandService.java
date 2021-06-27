@@ -1,10 +1,7 @@
 package ru.online.cloud.server.service;
 
-import ru.online.domain.Command;
-import ru.online.domain.CommandType;
-import ru.online.domain.FileInfo;
-
-import java.util.List;
+import ru.online.domain.command.Command;
+import ru.online.domain.command.CommandType;
 
 public interface CommandService {
 

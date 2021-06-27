@@ -1,4 +1,4 @@
-package ru.online.domain;
+package ru.online.domain.command;
 
 public enum CommandType {
 
@@ -6,6 +6,8 @@ public enum CommandType {
     MK_DIR,
     REM_DIR,
     UPLOAD,
+    READY_UPLOAD,
+    UPLOAD_COMPLETE,
     DOWNLOAD
 
 

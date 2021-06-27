@@ -5,6 +5,7 @@ import ru.online.cloud.server.service.CommandDictionaryService;
 import ru.online.cloud.server.service.CommandService;
 import ru.online.cloud.server.service.ServerService;
 import ru.online.cloud.server.service.impl.CommandDictionaryServiceImpl;
+import ru.online.cloud.server.service.impl.command.UploadFilesCommand;
 import ru.online.cloud.server.service.impl.command.ViewFilesInDirCommand;
 
 import java.util.Arrays;
@@ -21,7 +22,7 @@ public class Factory {
     }
 
     public static List<CommandService> getCommandServices() {
-        return Arrays.asList(new ViewFilesInDirCommand());
+        return Arrays.asList(new ViewFilesInDirCommand(), new UploadFilesCommand());
     }
 
 }

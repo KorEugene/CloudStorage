@@ -4,7 +4,7 @@ import ru.online.cloud.client.factory.Factory;
 import ru.online.cloud.client.service.Callback;
 import ru.online.cloud.client.service.ClientService;
 import ru.online.cloud.client.service.NetworkService;
-import ru.online.domain.Command;
+import ru.online.domain.command.Command;
 
 public class NettyNetworkService implements NetworkService {
 
@@ -29,8 +29,8 @@ public class NettyNetworkService implements NetworkService {
     }
 
     @Override
-    public String readCommandResult() {
-        return null;
+    public void sendFile(Command command) {
+        clientService.sendFile(command);
     }
 
     @Override
