@@ -34,17 +34,17 @@ public class MainController implements Initializable {
     private Properties properties;
 
     @FXML
-    public Button btnRefreshCloud;
+    private Button btnCloudUp;
     @FXML
-    public Button btnRefreshLocal;
+    private Button btnLocalUp;
     @FXML
-    public Button btnUpload;
+    private Button btnRefreshCloud;
     @FXML
-    public Button btnDownload;
-    //    @FXML
-//    private Button btnConnect;
-//    @FXML
-//    private Button btnDisconnect;
+    private Button btnRefreshLocal;
+    @FXML
+    private Button btnUpload;
+    @FXML
+    private Button btnDownload;
     @FXML
     private TextField localPathField;
     @FXML
@@ -235,7 +235,7 @@ public class MainController implements Initializable {
         });
     }
 
-    public void refreshLocalDirs(ActionEvent actionEvent) {
+    public void refreshLocalDirs() {
         updateList(CommandType.DUMMY, Paths.get(getCurrentPath(localPathField)), localFiles, localPathField);
     }
 
@@ -249,6 +249,8 @@ public class MainController implements Initializable {
         localPathField.setDisable(false);
         localFiles.setDisable(false);
         disksBox.setDisable(false);
+        btnLocalUp.setDisable(false);
+        btnCloudUp.setDisable(false);
 
     }
 
@@ -262,6 +264,8 @@ public class MainController implements Initializable {
         localPathField.setDisable(true);
         localFiles.setDisable(true);
         disksBox.setDisable(true);
+        btnLocalUp.setDisable(true);
+        btnCloudUp.setDisable(true);
     }
 
     public void btnUploadCommand() {
@@ -270,19 +274,16 @@ public class MainController implements Initializable {
         if (file.isDirectory()) {
             return;
         }
-        System.out.println("Upload: " + file + " file size: " + file.length());
         Command command = new Command(CommandType.UPLOAD, null, new Object[]{getSelectedFilename(localFiles), file.length()});
         if (command.getArgs()[0] == null) {
             return;
         }
         networkService.sendCommand(command, (result) -> {
-            System.out.println(result.getCommandName());
             command.setPath(path);
             switchInterfaceStateToDisabled();
             if (result.getCommandName() == CommandType.UPLOAD_READY) {
                 networkService.sendFile(command, (res) -> {
                     if (res.getCommandName() == CommandType.UPLOAD_COMPLETE) {
-                        System.out.println(res.getCommandName());
                         refreshCloudDirs();
                         switchInterfaceStateToEnabled();
                     }
@@ -298,18 +299,15 @@ public class MainController implements Initializable {
             return;
         }
         File file = new File(path);
-        System.out.println("Download: " + file + " file size: " + file.length());
-        Command command = new Command(CommandType.DOWNLOAD, path, new Object[]{getSelectedFilename(cloudFiles), file.length(), getCurrentPath(localPathField)});
-        switchInterfaceStateToDisabled();
-        networkService.sendDownloadCommand(command, (result) -> {
-            System.out.println(result.getCommandName());
-            if (result.getCommandName() == CommandType.DOWNLOAD_COMPLETE) {
-                switchInterfaceStateToEnabled();
-                System.out.println("Interface unblocked");
-                networkService.sendCommand(new Command(CommandType.DOWNLOAD_COMPLETE, "", new Object[]{}), (res) -> {
-                    System.out.println(res.getCommandName());
-//                    System.out.println("Download complete approved");
-                    updateList(CommandType.DUMMY, Paths.get(getCurrentPath(localPathField)), localFiles, localPathField);
+        Command command = new Command(CommandType.DOWNLOAD, "", new Object[]{});
+        networkService.sendCommand(command, (result) -> {
+            if (result.getCommandName() == CommandType.DOWNLOAD_READY) {
+                switchInterfaceStateToDisabled();
+                networkService.sendDownloadCommand(new Command(CommandType.DOWNLOAD_READY, path, new Object[]{getSelectedFilename(cloudFiles), file.length(), getCurrentPath(localPathField)}), (res) -> {
+                    if (res.getCommandName() == CommandType.DOWNLOAD_COMPLETE) {
+                        switchInterfaceStateToEnabled();
+                        updateList(CommandType.DUMMY, Paths.get(getCurrentPath(localPathField)), localFiles, localPathField);
+                    }
                 });
             }
         });

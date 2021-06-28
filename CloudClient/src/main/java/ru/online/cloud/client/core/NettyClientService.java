@@ -2,7 +2,6 @@ package ru.online.cloud.client.core;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -28,7 +27,6 @@ public class NettyClientService implements ClientService {
     private static final int PORT = 8189;
 
     private SocketChannel channel;
-//    private DataInboundHandler dataInboundHandler;
 
     private static NettyClientService instance;
 
@@ -45,7 +43,6 @@ public class NettyClientService implements ClientService {
     @Override
     public void startClient() {
         Thread networkThread = new Thread(() -> {
-//            dataInboundHandler = new DataInboundHandler();
             NioEventLoopGroup workerGroup = new NioEventLoopGroup();
             try {
                 Bootstrap bootstrap = new Bootstrap();
@@ -89,20 +86,17 @@ public class NettyClientService implements ClientService {
     @Override
     public void sendCommand(Command command, Callback callback) {
 
-
         ChannelPipeline p = channel.pipeline();
         p.get(DataInboundHandler.class).setIncomingData(callback);
 
         channel.writeAndFlush(command);
-
-        System.out.println("Отправлена команда: " + command.getCommandName());
     }
 
     @Override
     public void downloadFile(Command command, Callback callback) {
+
         channel.writeAndFlush(command);
         switchToFileDownloadPipeline(channel, (String) command.getArgs()[0], (long) command.getArgs()[1], (String) command.getArgs()[2], callback);
-        System.out.println("Начат приём файла");
     }
 
     @Override
@@ -133,6 +127,5 @@ public class NettyClientService implements ClientService {
         if (p.get("fileWr") == null) {
             p.addLast("fileWr", new FilesWriteHandler(channel, fileName, fileSize, path, callback));
         }
-        System.out.println(channel.pipeline());
     }
 }

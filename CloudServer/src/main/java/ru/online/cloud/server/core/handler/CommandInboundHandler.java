@@ -4,9 +4,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.serialization.ClassResolvers;
-import io.netty.handler.codec.serialization.ObjectDecoder;
-import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import ru.online.cloud.server.factory.Factory;
@@ -42,8 +39,6 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
 
         Command command = (Command) msg;
 
-        System.out.println("Получена команда: " + command.getCommandName());
-
         if (command.getCommandName() == CommandType.LS) {
             processLSCommand(ctx, command);
         }
@@ -54,13 +49,12 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
             switchToFileUploadPipeline(channel, (String) command.getArgs()[0], (Long) command.getArgs()[1]);
         }
 
-        if (command.getCommandName() == CommandType.DOWNLOAD_COMPLETE) {
+        if (command.getCommandName() == CommandType.DOWNLOAD) {
             Command result = dictionaryService.processCommand(command);
             ctx.writeAndFlush(result);
-            System.out.println(channel.pipeline());
         }
 
-        if (command.getCommandName() == CommandType.DOWNLOAD) {
+        if (command.getCommandName() == CommandType.DOWNLOAD_READY) {
             try {
                 ChunkedFile chunkedFile = new ChunkedFile(new File(command.getPath()));
                 channel.writeAndFlush(chunkedFile);
@@ -68,8 +62,6 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
                 e.printStackTrace();
             }
         }
-
-
     }
 
     private void processLSCommand(ChannelHandlerContext ctx, Command command) {
@@ -91,7 +83,6 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
         if (p.get("fileWr") == null) {
             p.addLast("fileWr", new FilesWriteHandler(channel, fileName, fileSize));
         }
-        System.out.println(channel.pipeline());
     }
 
 }

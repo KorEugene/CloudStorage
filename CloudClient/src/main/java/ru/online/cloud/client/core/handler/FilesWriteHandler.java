@@ -32,7 +32,6 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.path = path;
-        System.out.println("file size: " + fileSize);
         checkFileIsExists(path, fileName);
         this.answer = answer;
     }
@@ -91,7 +90,6 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
         if (p.get("chunkWr") == null) {
             p.addLast("chunkWr", new ChunkedWriteHandler());
         }
-        System.out.println(channel.pipeline());
         callback.callback(new Command(CommandType.DOWNLOAD_COMPLETE, null, new Object[]{}));
     }
 
