@@ -1,0 +1,1 @@
+CREATE TABLE if NOT EXISTS accounts (id INTEGER PRIMARY KEY autoincrement, username TEXT, password TEXT);

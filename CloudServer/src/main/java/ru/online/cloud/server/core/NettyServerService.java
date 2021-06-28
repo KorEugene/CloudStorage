@@ -12,13 +12,20 @@ import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import ru.online.cloud.server.core.handler.CommandInboundHandler;
+import ru.online.cloud.server.factory.Factory;
+import ru.online.cloud.server.service.AuthService;
 import ru.online.cloud.server.service.ServerService;
 
 public class NettyServerService implements ServerService {
 
     private static final int SERVER_PORT = 8189;
-
     private static NettyServerService instance;
+
+    private AuthService authService;
+
+    private NettyServerService() {
+        authService = Factory.getAuthService();
+    }
 
     public static NettyServerService getInstance() {
         if (instance == null) {
@@ -29,6 +36,8 @@ public class NettyServerService implements ServerService {
 
     @Override
     public void startServer() {
+
+        authService.start();
 
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup(2);
@@ -43,7 +52,7 @@ public class NettyServerService implements ServerService {
                                 .addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                 .addLast("encoder", new ObjectEncoder())
                                 .addLast("command", new CommandInboundHandler(channel))
-                                .addLast("chunkWr",new ChunkedWriteHandler());
+                                .addLast("chunkWr", new ChunkedWriteHandler());
 //                                .addLast(new FilesWriteHandler());
 
                     }
