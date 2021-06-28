@@ -7,7 +7,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
-import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import ru.online.domain.command.Command;
 import ru.online.domain.command.CommandType;
@@ -23,16 +22,18 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
     private String fileName;
     private long fileSize;
     private File file;
+    private String userDir;
 
-    public FilesWriteHandler(SocketChannel channel, String fileName, long fileSize) {
+    public FilesWriteHandler(SocketChannel channel, String fileName, long fileSize, String userDir) {
         this.channel = channel;
         this.fileName = fileName;
         this.fileSize = fileSize;
+        this.userDir = userDir;
         checkFileIsExists(fileName);
     }
 
     private void checkFileIsExists(String fileName) {
-        file = new File("CloudServer\\storage" + File.separator + fileName);
+        file = new File(userDir + File.separator + fileName);
         if (file.exists()) {
             file.delete();
         }

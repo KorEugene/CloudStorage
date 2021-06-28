@@ -1,0 +1,5 @@
+CREATE TABLE accounts (
+id SERIAL PRIMARY KEY,
+user_name VARCHAR(20) NOT NULL UNIQUE,
+user_password VARCHAR(20) NOT NULL
+);

@@ -46,10 +46,10 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
         if (command.getCommandName() == CommandType.UPLOAD) {
             Command result = dictionaryService.processCommand(command);
             ctx.writeAndFlush(result);
-            switchToFileUploadPipeline(channel, (String) command.getArgs()[0], (Long) command.getArgs()[1]);
+            switchToFileUploadPipeline(channel, (String) command.getArgs()[0], (Long) command.getArgs()[1], (String) command.getArgs()[2]);
         }
 
-        if (command.getCommandName() == CommandType.DOWNLOAD) {
+        if (command.getCommandName() == CommandType.DOWNLOAD || command.getCommandName() == CommandType.MK_DIR) {
             Command result = dictionaryService.processCommand(command);
             ctx.writeAndFlush(result);
         }
@@ -69,7 +69,7 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
         ctx.writeAndFlush(result);
     }
 
-    private void switchToFileUploadPipeline(SocketChannel channel, String fileName, long fileSize) {
+    private void switchToFileUploadPipeline(SocketChannel channel, String fileName, long fileSize, String userDir) {
         ChannelPipeline p = channel.pipeline();
         if (p.get("decoder") != null) {
             p.remove("decoder");
@@ -81,7 +81,7 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
             p.addLast("chunkWr", new ChunkedWriteHandler());
         }
         if (p.get("fileWr") == null) {
-            p.addLast("fileWr", new FilesWriteHandler(channel, fileName, fileSize));
+            p.addLast("fileWr", new FilesWriteHandler(channel, fileName, fileSize, userDir));
         }
     }
 

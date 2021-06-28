@@ -32,7 +32,16 @@ public class MainController implements Initializable {
 
     public NetworkService networkService;
     private Properties properties;
+    private String userCloudDirectory;
 
+    @FXML
+    private TextField username;
+    @FXML
+    private PasswordField password;
+    @FXML
+    private Button authenticate;
+    @FXML
+    private Button register;
     @FXML
     private Button btnCloudUp;
     @FXML
@@ -58,14 +67,11 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
         loadProperties();
-//        btnDisconnect.setDisable(true);
         connectToServer();
         initLocalFilePanel();
         initCloudFilePanel();
-
-
+        disableCloudInterface(true);
     }
 
     private void loadProperties() {
@@ -96,7 +102,11 @@ public class MainController implements Initializable {
     public void btnCloudPathUp() {
         Path upperPath = Paths.get(cloudPathField.getText()).getParent();
         if (upperPath != null) {
-            updateList(CommandType.LS, upperPath, cloudFiles, cloudPathField);
+            if (getCurrentPath(cloudPathField).equals(userCloudDirectory)) {
+                updateList(CommandType.LS, Paths.get(cloudPathField.getText()), cloudFiles, cloudPathField);
+            } else {
+                updateList(CommandType.LS, upperPath, cloudFiles, cloudPathField);
+            }
         }
     }
 
@@ -218,13 +228,8 @@ public class MainController implements Initializable {
         cloudPathField.clear();
     }
 
-//    private void switchButtonsState() {
-//        btnConnect.setDisable(!btnConnect.isDisabled());
-//        btnDisconnect.setDisable(!btnDisconnect.isDisabled());
-//    }
-
     public void refreshCloudDirs() {
-        Command command = new Command(CommandType.LS, properties.getProperty("cld.directory"), new Object[]{});
+        Command command = new Command(CommandType.LS, userCloudDirectory, new Object[]{});
         networkService.sendCommand(command, (result) -> {
             Platform.runLater(() -> {
                 cloudFiles.getItems().clear();
@@ -239,33 +244,30 @@ public class MainController implements Initializable {
         updateList(CommandType.DUMMY, Paths.get(getCurrentPath(localPathField)), localFiles, localPathField);
     }
 
-    private void switchInterfaceStateToEnabled() {
-        btnRefreshCloud.setDisable(false);
-        cloudPathField.setDisable(false);
-        cloudFiles.setDisable(false);
-        btnUpload.setDisable(false);
-        btnDownload.setDisable(false);
-        btnRefreshLocal.setDisable(false);
-        localPathField.setDisable(false);
-        localFiles.setDisable(false);
-        disksBox.setDisable(false);
-        btnLocalUp.setDisable(false);
-        btnCloudUp.setDisable(false);
-
+    private void disableLocalInterface(boolean value) {
+        btnUpload.setDisable(value);
+        btnDownload.setDisable(value);
+        btnRefreshLocal.setDisable(value);
+        localPathField.setDisable(value);
+        localFiles.setDisable(value);
+        disksBox.setDisable(value);
+        btnLocalUp.setDisable(value);
     }
 
-    private void switchInterfaceStateToDisabled() {
-        btnRefreshCloud.setDisable(true);
-        cloudPathField.setDisable(true);
-        cloudFiles.setDisable(true);
-        btnUpload.setDisable(true);
-        btnDownload.setDisable(true);
-        btnRefreshLocal.setDisable(true);
-        localPathField.setDisable(true);
-        localFiles.setDisable(true);
-        disksBox.setDisable(true);
-        btnLocalUp.setDisable(true);
-        btnCloudUp.setDisable(true);
+    private void disableCloudInterface(boolean value) {
+        btnUpload.setDisable(value);
+        btnDownload.setDisable(value);
+        btnRefreshCloud.setDisable(value);
+        cloudPathField.setDisable(value);
+        cloudFiles.setDisable(value);
+        btnCloudUp.setDisable(value);
+    }
+
+    private void disableAuthBlock() {
+        username.setDisable(true);
+        password.setDisable(true);
+        authenticate.setDisable(true);
+        register.setDisable(true);
     }
 
     public void btnUploadCommand() {
@@ -274,18 +276,18 @@ public class MainController implements Initializable {
         if (file.isDirectory()) {
             return;
         }
-        Command command = new Command(CommandType.UPLOAD, null, new Object[]{getSelectedFilename(localFiles), file.length()});
+        Command command = new Command(CommandType.UPLOAD, null, new Object[]{getSelectedFilename(localFiles), file.length(), userCloudDirectory});
         if (command.getArgs()[0] == null) {
             return;
         }
         networkService.sendCommand(command, (result) -> {
             command.setPath(path);
-            switchInterfaceStateToDisabled();
+            disableCloudInterface(true);
             if (result.getCommandName() == CommandType.UPLOAD_READY) {
                 networkService.sendFile(command, (res) -> {
                     if (res.getCommandName() == CommandType.UPLOAD_COMPLETE) {
                         refreshCloudDirs();
-                        switchInterfaceStateToEnabled();
+                        disableCloudInterface(false);
                     }
                 });
             }
@@ -302,16 +304,59 @@ public class MainController implements Initializable {
         Command command = new Command(CommandType.DOWNLOAD, "", new Object[]{});
         networkService.sendCommand(command, (result) -> {
             if (result.getCommandName() == CommandType.DOWNLOAD_READY) {
-                switchInterfaceStateToDisabled();
+                disableLocalInterface(true);
+                disableCloudInterface(true);
                 networkService.sendDownloadCommand(new Command(CommandType.DOWNLOAD_READY, path, new Object[]{getSelectedFilename(cloudFiles), file.length(), getCurrentPath(localPathField)}), (res) -> {
                     if (res.getCommandName() == CommandType.DOWNLOAD_COMPLETE) {
-                        switchInterfaceStateToEnabled();
-                        updateList(CommandType.DUMMY, Paths.get(getCurrentPath(localPathField)), localFiles, localPathField);
+                        disableLocalInterface(false);
+                        disableCloudInterface(false);
+                        refreshLocalDirs();
                     }
                 });
             }
         });
-
-
     }
+
+    public void sendRegisterCommand() {
+        networkService.sendCommand(new Command(CommandType.REGISTRATION_REQUEST, "", new Object[]{username.getText(), password.getText()}), result -> {
+            Platform.runLater(() -> {
+                if (result.getCommandName() == CommandType.REGISTRATION_FAILED) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING, "Registration failed", ButtonType.OK);
+                    alert.showAndWait();
+                    username.clear();
+                    password.clear();
+                }
+                if (result.getCommandName() == CommandType.REGISTRATION_SUCCEEDED) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Registration succeed", ButtonType.OK);
+                    alert.showAndWait();
+                    username.clear();
+                    password.clear();
+                }
+            });
+        });
+    }
+
+    public void sendAuthenticateCommand() {
+        networkService.sendCommand(new Command(CommandType.AUTH_REQUEST, "", new Object[]{username.getText(), password.getText()}), result -> {
+            Platform.runLater(() -> {
+                if (result.getCommandName() == CommandType.AUTH_FAILED) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING, "Auth failed", ButtonType.OK);
+                    alert.showAndWait();
+                    username.clear();
+                    password.clear();
+                }
+                if (result.getCommandName() == CommandType.AUTH_SUCCEEDED) {
+                    username.clear();
+                    password.clear();
+                    userCloudDirectory = (String) result.getArgs()[0];
+                    refreshCloudDirs();
+                    disableAuthBlock();
+                    disableCloudInterface(false);
+                }
+            });
+        });
+    }
+
+    //TODO: refactoring, progress bar, mkDir, remDir, logOut+reLogon, interface alignment, add logger
+
 }

@@ -21,7 +21,7 @@ public class AuthenticateAccountCommand implements CommandService {
 
         Command result = new Command();
 
-        if (authService.checkParameter("username", username) && authService.checkParameter("password", password)) {
+        if (authService.checkLoginPassword(username, password)) {
             result.setCommandName(CommandType.AUTH_SUCCEEDED);
             result.setArgs(new Object[]{basePath + File.separator + username});
         } else {

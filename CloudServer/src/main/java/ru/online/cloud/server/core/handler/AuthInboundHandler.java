@@ -43,7 +43,9 @@ public class AuthInboundHandler extends ChannelInboundHandlerAdapter {
         if (command.getCommandName() == CommandType.AUTH_REQUEST) {
             Command result = dictionaryService.processCommand(command);
             ctx.writeAndFlush(result);
-            switchToCommandPipeline(channel);
+            if (result.getCommandName() == CommandType.AUTH_SUCCEEDED) {
+                switchToCommandPipeline(channel);
+            }
         }
 
     }

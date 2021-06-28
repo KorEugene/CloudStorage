@@ -8,8 +8,8 @@ public class AuthServiceImpl implements AuthService {
 
     private static AuthServiceImpl instance;
 
-    private final String REGISTER_NEW_ACCOUNT = "INSERT INTO accounts (username, password) VALUES (?, ?);";
-    private final String CHECK_PARAMETER_QUERY = "SELECT ? FROM accounts WHERE ? = ?;";
+    private final String REGISTER_NEW_ACCOUNT = "INSERT INTO accounts (user_name, user_password) VALUES (?, ?);";
+    private final String CHECK_PARAMETER_QUERY = "SELECT * FROM accounts WHERE user_name = ? and user_password = ?;";
 
     private Connection connection;
     private Statement statement;
@@ -55,12 +55,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public boolean checkParameter(String parameter, String value) {
+    public boolean checkLoginPassword(String username, String password) {
         try {
             ps = connection.prepareStatement(CHECK_PARAMETER_QUERY);
-            ps.setString(1, parameter);
-            ps.setString(2, parameter);
-            ps.setString(3, value);
+            ps.setString(1, username);
+            ps.setString(2, password);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return true;

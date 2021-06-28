@@ -60,8 +60,12 @@
             </HBox>
             <TableView fx:id="cloudFiles" VBox.vgrow="ALWAYS"/>
             <HBox spacing="5">
-<!--                <Button fx:id="btnConnect" text="Connect" onAction="#connectToServer"/>-->
-<!--                <Button fx:id="btnDisconnect" text="Disconnect" onAction="#disconnectFromServer"/>-->
+                <Label>Username</Label>
+                <TextField fx:id="username"/>
+                <Label>Password</Label>
+                <PasswordField fx:id="password"/>
+                <Button fx:id="authenticate" text="Authenticate" onAction="#sendAuthenticateCommand"/>
+                <Button fx:id="register" text="Register" onAction="#sendRegisterCommand"/>
                 <Button fx:id="btnRefreshCloud" text="Refresh Cloud" onAction="#refreshCloudDirs"/>
                 <padding>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>

@@ -8,5 +8,5 @@ public interface AuthService {
 
     int register(String username, String password);
 
-    boolean checkParameter(String parameter, String value);
+    boolean checkLoginPassword(String parameter, String value);
 }

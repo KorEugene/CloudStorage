@@ -1,6 +1,5 @@
 package ru.online.cloud.client.core.handler;
 
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.Setter;

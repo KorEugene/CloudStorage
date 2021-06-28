@@ -27,7 +27,9 @@ public class Factory {
     }
 
     public static List<CommandService> getCommandServices() {
-        return Arrays.asList(new ViewFilesInDirCommand(), new UploadFilesCommand(), new DownloadFilesCommand(), new RegisterAccountCommand(), new AuthenticateAccountCommand());
+        return Arrays.asList(new ViewFilesInDirCommand(), new UploadFilesCommand(),
+                new DownloadFilesCommand(), new RegisterAccountCommand(),
+                new AuthenticateAccountCommand(), new MakeDirectoryCommand());
     }
 
 }

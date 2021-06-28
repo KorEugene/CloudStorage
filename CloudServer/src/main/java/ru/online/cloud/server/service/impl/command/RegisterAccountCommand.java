@@ -25,7 +25,7 @@ public class RegisterAccountCommand implements CommandService {
 
         Command result = new Command();
 
-        if (!authService.checkParameter("username", username)) {
+        if (!authService.checkLoginPassword("user_name", username)) {
             int res = authService.register(username, password);
             if (res == 1) {
                 result.setCommandName(CommandType.REGISTRATION_SUCCEEDED);
