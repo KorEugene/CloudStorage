@@ -54,19 +54,21 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
             switchToFileUploadPipeline(channel, (String) command.getArgs()[0], (Long) command.getArgs()[1]);
         }
 
+        if (command.getCommandName() == CommandType.DOWNLOAD_COMPLETE) {
+            Command result = dictionaryService.processCommand(command);
+            ctx.writeAndFlush(result);
+            System.out.println(channel.pipeline());
+        }
+
         if (command.getCommandName() == CommandType.DOWNLOAD) {
-//            Command result = dictionaryService.processCommand(command);
-//            ctx.writeAndFlush(result);
-//            switchToFileDownloadPipeline(channel);
             try {
                 ChunkedFile chunkedFile = new ChunkedFile(new File(command.getPath()));
                 channel.writeAndFlush(chunkedFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-//            switchToCommandPipeline(channel);
         }
+
 
     }
 
@@ -80,9 +82,6 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
         if (p.get("decoder") != null) {
             p.remove("decoder");
         }
-        if (p.get("encoder") != null) {
-            p.remove("encoder");
-        }
         if (p.get("command") != null) {
             p.remove("command");
         }
@@ -95,43 +94,4 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
         System.out.println(channel.pipeline());
     }
 
-    private void switchToFileDownloadPipeline(SocketChannel channel) {
-        ChannelPipeline p = channel.pipeline();
-        if (p.get("fileWr") != null) {
-            p.remove("fileWr");
-        }
-        if (p.get("decoder") == null) {
-            p.addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
-        }
-        if (p.get("encoder") == null) {
-            p.addLast("encoder", new ObjectEncoder());
-        }
-        if (p.get("command") == null) {
-            p.addLast("command", new CommandInboundHandler(channel));
-        }
-        if (p.get("chunkWr") == null) {
-            p.addLast("chunkWr", new ChunkedWriteHandler());
-        }
-        System.out.println(channel.pipeline());
-    }
-
-    private void switchToCommandPipeline(SocketChannel channel) {
-        ChannelPipeline p = channel.pipeline();
-        if (p.get("chunkWr") != null) {
-            p.remove("chunkWr");
-        }
-        if (p.get("fileWr") != null) {
-            p.remove("fileWr");
-        }
-        if (p.get("decoder") == null) {
-            p.addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
-        }
-        if (p.get("encoder") == null) {
-            p.addLast("encoder", new ObjectEncoder());
-        }
-        if (p.get("command") == null) {
-            p.addLast("command", new CommandInboundHandler(channel));
-        }
-        System.out.println(channel.pipeline());
-    }
 }

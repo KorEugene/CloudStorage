@@ -24,9 +24,15 @@
             <HBox spacing="3.0">
                 <ComboBox fx:id="disksBox" onAction="#selectDisk"/>
                 <TextField fx:id="localPathField" editable="false" HBox.hgrow="ALWAYS"/>
-                <Button text="Up" onAction="#btnLocalPathUp"/>
+                <Button fx:id="btnLocalUp" text="Up" onAction="#btnLocalPathUp"/>
             </HBox>
             <TableView fx:id="localFiles" VBox.vgrow="ALWAYS"/>
+            <HBox spacing="5">
+                <Button fx:id="btnRefreshLocal" text="Refresh local" onAction="#refreshLocalDirs"/>
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+            </HBox>
         </VBox>
 
         <VBox alignment="CENTER" spacing="10.0">
@@ -54,9 +60,9 @@
             </HBox>
             <TableView fx:id="cloudFiles" VBox.vgrow="ALWAYS"/>
             <HBox spacing="5">
-                <Button fx:id="btnConnect" text="Connect" onAction="#connectToServer"/>
-                <Button fx:id="btnDisconnect" text="Disconnect" onAction="#disconnectFromServer"/>
-                <Button fx:id="btnListDirs" text="List directories" onAction="#listDirs"/>
+<!--                <Button fx:id="btnConnect" text="Connect" onAction="#connectToServer"/>-->
+<!--                <Button fx:id="btnDisconnect" text="Disconnect" onAction="#disconnectFromServer"/>-->
+                <Button fx:id="btnRefreshCloud" text="Refresh cloud" onAction="#refreshCloudDirs"/>
                 <padding>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
                 </padding>

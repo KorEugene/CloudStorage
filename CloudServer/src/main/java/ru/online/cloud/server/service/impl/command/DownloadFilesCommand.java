@@ -8,7 +8,7 @@ public class DownloadFilesCommand implements CommandService {
 
     @Override
     public Command processCommand(Command command) {
-        return new Command(getCommand(), "", new Object[]{});
+        return new Command(CommandType.DOWNLOAD_READY, "", new Object[]{});
     }
 
     @Override

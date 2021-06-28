@@ -34,16 +34,17 @@ public class MainController implements Initializable {
     private Properties properties;
 
     @FXML
-    public Button btnListDirs;
-
+    public Button btnRefreshCloud;
+    @FXML
+    public Button btnRefreshLocal;
     @FXML
     public Button btnUpload;
     @FXML
     public Button btnDownload;
-    @FXML
-    private Button btnConnect;
-    @FXML
-    private Button btnDisconnect;
+    //    @FXML
+//    private Button btnConnect;
+//    @FXML
+//    private Button btnDisconnect;
     @FXML
     private TextField localPathField;
     @FXML
@@ -59,8 +60,8 @@ public class MainController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         loadProperties();
-        btnDisconnect.setDisable(true);
-
+//        btnDisconnect.setDisable(true);
+        connectToServer();
         initLocalFilePanel();
         initCloudFilePanel();
 
@@ -207,7 +208,6 @@ public class MainController implements Initializable {
             networkService = Factory.getNetworkService();
         }
         networkService.openConnection();
-        switchButtonsState();
     }
 
     public void disconnectFromServer() {
@@ -216,16 +216,14 @@ public class MainController implements Initializable {
         }
         cloudFiles.getItems().clear();
         cloudPathField.clear();
-        switchInterfaceStateToEnabled();
-        switchButtonsState();
     }
 
-    private void switchButtonsState() {
-        btnConnect.setDisable(!btnConnect.isDisabled());
-        btnDisconnect.setDisable(!btnDisconnect.isDisabled());
-    }
+//    private void switchButtonsState() {
+//        btnConnect.setDisable(!btnConnect.isDisabled());
+//        btnDisconnect.setDisable(!btnDisconnect.isDisabled());
+//    }
 
-    public void listDirs() {
+    public void refreshCloudDirs() {
         Command command = new Command(CommandType.LS, properties.getProperty("cld.directory"), new Object[]{});
         networkService.sendCommand(command, (result) -> {
             Platform.runLater(() -> {
@@ -234,24 +232,36 @@ public class MainController implements Initializable {
                 cloudFiles.sort();
                 cloudPathField.setText(result.getPath());
             });
-
         });
     }
 
+    public void refreshLocalDirs(ActionEvent actionEvent) {
+        updateList(CommandType.DUMMY, Paths.get(getCurrentPath(localPathField)), localFiles, localPathField);
+    }
+
     private void switchInterfaceStateToEnabled() {
-        btnListDirs.setDisable(false);
+        btnRefreshCloud.setDisable(false);
         cloudPathField.setDisable(false);
         cloudFiles.setDisable(false);
         btnUpload.setDisable(false);
         btnDownload.setDisable(false);
+        btnRefreshLocal.setDisable(false);
+        localPathField.setDisable(false);
+        localFiles.setDisable(false);
+        disksBox.setDisable(false);
+
     }
 
     private void switchInterfaceStateToDisabled() {
-        btnListDirs.setDisable(true);
+        btnRefreshCloud.setDisable(true);
         cloudPathField.setDisable(true);
         cloudFiles.setDisable(true);
         btnUpload.setDisable(true);
         btnDownload.setDisable(true);
+        btnRefreshLocal.setDisable(true);
+        localPathField.setDisable(true);
+        localFiles.setDisable(true);
+        disksBox.setDisable(true);
     }
 
     public void btnUploadCommand() {
@@ -269,12 +279,15 @@ public class MainController implements Initializable {
             System.out.println(result.getCommandName());
             command.setPath(path);
             switchInterfaceStateToDisabled();
-            networkService.sendFile(command, (res) -> {
-                if (res.getCommandName() == CommandType.UPLOAD_COMPLETE) {
-                    listDirs();
-                    switchInterfaceStateToEnabled();
-                }
-            });
+            if (result.getCommandName() == CommandType.UPLOAD_READY) {
+                networkService.sendFile(command, (res) -> {
+                    if (res.getCommandName() == CommandType.UPLOAD_COMPLETE) {
+                        System.out.println(res.getCommandName());
+                        refreshCloudDirs();
+                        switchInterfaceStateToEnabled();
+                    }
+                });
+            }
         });
     }
 
@@ -292,8 +305,13 @@ public class MainController implements Initializable {
             System.out.println(result.getCommandName());
             if (result.getCommandName() == CommandType.DOWNLOAD_COMPLETE) {
                 switchInterfaceStateToEnabled();
+                System.out.println("Interface unblocked");
+                networkService.sendCommand(new Command(CommandType.DOWNLOAD_COMPLETE, "", new Object[]{}), (res) -> {
+                    System.out.println(res.getCommandName());
+//                    System.out.println("Download complete approved");
+                    updateList(CommandType.DUMMY, Paths.get(getCurrentPath(localPathField)), localFiles, localPathField);
+                });
             }
-
         });
 
 

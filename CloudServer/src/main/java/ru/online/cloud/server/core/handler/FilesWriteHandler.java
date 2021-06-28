@@ -75,10 +75,7 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
             p.remove("fileWr");
         }
         if (p.get("decoder") == null) {
-            p.addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
-        }
-        if (p.get("encoder") == null) {
-            p.addLast("encoder", new ObjectEncoder());
+            p.addBefore("encoder" ,"decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
         }
         if (p.get("command") == null) {
             p.addLast("command", new CommandInboundHandler(channel));

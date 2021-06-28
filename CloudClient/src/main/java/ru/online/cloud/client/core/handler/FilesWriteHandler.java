@@ -26,9 +26,7 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
     private long fileSize;
     private File file;
     private Callback answer;
-//    private DataInboundHandler dataInboundHandler;
 
-//    public FilesWriteHandler(SocketChannel channel, String fileName, long fileSize, String path, Callback answer, DataInboundHandler dataInboundHandler) {
     public FilesWriteHandler(SocketChannel channel, String fileName, long fileSize, String path, Callback answer) {
         this.channel = channel;
         this.fileName = fileName;
@@ -37,7 +35,6 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
         System.out.println("file size: " + fileSize);
         checkFileIsExists(path, fileName);
         this.answer = answer;
-//        this.dataInboundHandler = dataInboundHandler;
     }
 
     private void checkFileIsExists(String path, String fileName) {
@@ -63,7 +60,7 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
 
         byteBuf.release();
 
-        if (fileSize <= 0) {
+        if (fileSize == 0) {
             switchToCommandPipeline(channel, answer);
         }
     }
@@ -82,28 +79,20 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
         if (p.get("fileWr") != null) {
             p.remove("fileWr");
         }
-//        if (p.get("decoder") == null) {
-////            p.addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
-//            p.addBefore("encoder","decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
-//        }
-        if (p.get("encoder") == null) {
-//            p.addLast("encoder", new ObjectEncoder());
-            p.addBefore("dataInHandler" ,"encoder", new ObjectEncoder());
-        }
         if (p.get("decoder") == null) {
-//            p.addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
             p.addBefore("encoder","decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
         }
-//        if (p.get("dataInHandler") == null) {
-//            p.addLast("dataInHandler", dataInboundHandler);
-//        }
+        if (p.get("encoder") == null) {
+            p.addLast("encoder", new ObjectEncoder());
+        }
+        if (p.get("dataInHandler") == null) {
+            p.addLast("dataInHandler", new DataInboundHandler());
+        }
         if (p.get("chunkWr") == null) {
             p.addLast("chunkWr", new ChunkedWriteHandler());
         }
         System.out.println(channel.pipeline());
         callback.callback(new Command(CommandType.DOWNLOAD_COMPLETE, null, new Object[]{}));
-//        System.out.println("Download complete!");
-//        channel.writeAndFlush(new Command(CommandType.UPLOAD_COMPLETE, fileName, new Object[]{}));
     }
 
 }
