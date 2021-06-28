@@ -1,19 +1,19 @@
 package ru.online.cloud.server.service.impl;
 
-import ru.online.cloud.server.core.NettyServerService;
 import ru.online.cloud.server.service.AuthService;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class AuthServiceImpl implements AuthService {
 
     private static AuthServiceImpl instance;
 
+    private final String REGISTER_NEW_ACCOUNT = "INSERT INTO accounts (username, password) VALUES (?, ?);";
+    private final String CHECK_PARAMETER_QUERY = "SELECT ? FROM accounts WHERE ? = ?;";
+
     private Connection connection;
     private Statement statement;
+    private PreparedStatement ps;
 
     private AuthServiceImpl() {
     }
@@ -40,6 +40,37 @@ public class AuthServiceImpl implements AuthService {
         System.out.println("Disconnected from DB. Auth stopped.");
     }
 
+    @Override
+    public int register(String username, String password) {
+        int result = 0;
+        try {
+            ps = connection.prepareStatement(REGISTER_NEW_ACCOUNT);
+            ps.setString(1, username);
+            ps.setString(2, password);
+            result = ps.executeUpdate();
+        } catch (SQLException sqlException) {
+            System.out.println(sqlException.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public boolean checkParameter(String parameter, String value) {
+        try {
+            ps = connection.prepareStatement(CHECK_PARAMETER_QUERY);
+            ps.setString(1, parameter);
+            ps.setString(2, parameter);
+            ps.setString(3, value);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (SQLException sqlException) {
+            System.out.println(sqlException.getMessage());
+        }
+        return false;
+    }
+
     private void connect() {
         try {
             Class.forName("org.postgresql.Driver");
@@ -47,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
             System.out.println(exception.getMessage());
         }
         try {
-            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5435/cloud");
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5435/cloud", "postgres", "postgrespass");
             statement = connection.createStatement();
         } catch (SQLException exception) {
             System.out.println(exception.getMessage());

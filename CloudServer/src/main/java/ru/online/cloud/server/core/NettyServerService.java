@@ -11,20 +11,27 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import ru.online.cloud.server.core.handler.AuthInboundHandler;
 import ru.online.cloud.server.core.handler.CommandInboundHandler;
 import ru.online.cloud.server.factory.Factory;
-import ru.online.cloud.server.service.AuthService;
 import ru.online.cloud.server.service.ServerService;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Properties;
 
 public class NettyServerService implements ServerService {
 
     private static final int SERVER_PORT = 8189;
     private static NettyServerService instance;
-
-    private AuthService authService;
+    private static Properties properties;
 
     private NettyServerService() {
-        authService = Factory.getAuthService();
+        Factory.getAuthService().start();
+        loadProperties();
+        initialStorage();
     }
 
     public static NettyServerService getInstance() {
@@ -36,8 +43,6 @@ public class NettyServerService implements ServerService {
 
     @Override
     public void startServer() {
-
-        authService.start();
 
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup(2);
@@ -51,9 +56,9 @@ public class NettyServerService implements ServerService {
                         channel.pipeline()
                                 .addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                 .addLast("encoder", new ObjectEncoder())
-                                .addLast("command", new CommandInboundHandler(channel))
-                                .addLast("chunkWr", new ChunkedWriteHandler());
-//                                .addLast(new FilesWriteHandler());
+                                .addLast("auth", new AuthInboundHandler(channel));
+//                                .addLast("command", new CommandInboundHandler(channel))
+//                                .addLast("chunkWr", new ChunkedWriteHandler());
 
                     }
                 });
@@ -72,5 +77,29 @@ public class NettyServerService implements ServerService {
 
     }
 
+    private void loadProperties() {
+        try (InputStream input = NettyServerService.class.getClassLoader().getResourceAsStream("server.properties")) {
+            properties = new Properties();
+            properties.load(input);
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    @Override
+    public Properties getProperties() {
+        return properties;
+    }
+
+    private void initialStorage() {
+        String basePath = getProperties().getProperty("cld.directory");
+        if (Files.notExists(Paths.get(basePath))) {
+            try {
+                Files.createDirectories(Paths.get(basePath));
+            } catch (IOException exception) {
+                System.out.println(exception.getMessage());
+            }
+        }
+    }
 
 }
