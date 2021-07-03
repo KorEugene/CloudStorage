@@ -7,10 +7,5 @@ public interface CommandService {
 
     Command processCommand(Command command);
 
-//    List<FileInfo> processCommand(Command command);
-
-//    String processCommand(Command command);
-
     CommandType getCommand();
-
 }

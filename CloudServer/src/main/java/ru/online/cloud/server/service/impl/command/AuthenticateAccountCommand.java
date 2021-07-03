@@ -1,17 +1,24 @@
 package ru.online.cloud.server.service.impl.command;
 
 import ru.online.cloud.server.factory.Factory;
-import ru.online.cloud.server.service.AuthService;
 import ru.online.cloud.server.service.CommandService;
+import ru.online.cloud.server.service.DataBaseProcessService;
+import ru.online.cloud.server.service.StorageService;
+import ru.online.cloud.server.util.PropertyUtil;
 import ru.online.domain.command.Command;
 import ru.online.domain.command.CommandType;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class AuthenticateAccountCommand implements CommandService {
 
-    private final AuthService authService = Factory.getAuthService();
-    private final String basePath = Factory.getServerService().getProperties().getProperty("cld.directory");
+    private final DataBaseProcessService dataBaseProcessService;
+    private final StorageService storageService;
+
+    public AuthenticateAccountCommand() {
+        dataBaseProcessService = Factory.getDataBaseProcessService();
+        storageService = Factory.getStorageService();
+    }
 
     @Override
     public Command processCommand(Command command) {
@@ -21,13 +28,15 @@ public class AuthenticateAccountCommand implements CommandService {
 
         Command result = new Command();
 
-        if (authService.checkLoginPassword(username, password)) {
-            result.setCommandName(CommandType.AUTH_SUCCEEDED);
-            result.setArgs(new Object[]{basePath + File.separator + username});
+        if (dataBaseProcessService.checkCredentials(username, password)) {
+            Path userDirectory = storageService.createDirectoryIfNotExists(PropertyUtil.getServerDirectory(), username);
+            if (userDirectory != null) {
+                result.setCommandName(CommandType.AUTH_SUCCEEDED);
+                result.setArgs(new Object[]{userDirectory.toString()});
+            }
         } else {
             result.setCommandName(CommandType.AUTH_FAILED);
         }
-
         return result;
     }
 

@@ -1,13 +1,15 @@
 package ru.online.cloud.server.core.handler;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
+import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import lombok.extern.log4j.Log4j2;
 import ru.online.domain.command.Command;
 import ru.online.domain.command.CommandType;
 
@@ -16,16 +18,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+@Log4j2
 public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
 
-    private SocketChannel channel;
     private String fileName;
     private long fileSize;
     private File file;
     private String userDir;
 
-    public FilesWriteHandler(SocketChannel channel, String fileName, long fileSize, String userDir) {
-        this.channel = channel;
+    public FilesWriteHandler(String fileName, long fileSize, String userDir) {
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.userDir = userDir;
@@ -51,39 +52,47 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
+        } finally {
+            byteBuf.release();
         }
 
-        byteBuf.release();
+//        byteBuf.release();
 
         if (fileSize == 0) {
-            switchToCommandPipeline(channel);
+            switchToCommandPipeline(ctx.channel());
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        System.out.println(cause.getMessage());
-        switchToCommandPipeline(channel);
+        log.error(cause.getMessage());
+        switchToCommandPipeline(ctx.channel());
     }
 
-    private void switchToCommandPipeline(SocketChannel channel) {
+    private void switchToCommandPipeline(Channel channel) {
         ChannelPipeline p = channel.pipeline();
-        if (p.get("chunkWr") != null) {
-            p.remove("chunkWr");
+        if (p.get(ObjectEncoder.class) != null) {
+            p.remove(ObjectEncoder.class);
         }
-        if (p.get("fileWr") != null) {
-            p.remove("fileWr");
+        if (p.get(ChunkedWriteHandler.class) != null) {
+            p.remove(ChunkedWriteHandler.class);
         }
-        if (p.get("decoder") == null) {
-            p.addBefore("encoder" ,"decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
+        if (p.get(FilesWriteHandler.class) != null) {
+            p.remove(FilesWriteHandler.class);
         }
-        if (p.get("command") == null) {
-            p.addLast("command", new CommandInboundHandler(channel));
+        if (p.get(ObjectDecoder.class) == null) {
+            p.addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
         }
-        if (p.get("chunkWr") == null) {
-            p.addLast("chunkWr", new ChunkedWriteHandler());
+        if (p.get(ObjectEncoder.class) == null) {
+            p.addLast(new ObjectEncoder());
         }
+        if (p.get(CommandInboundHandler.class) == null) {
+            p.addLast(new CommandInboundHandler());
+        }
+        if (p.get(ChunkedWriteHandler.class) == null) {
+            p.addLast(new ChunkedWriteHandler());
+        }
+        log.info("Pipeline changed to: " + p);
         channel.writeAndFlush(new Command(CommandType.UPLOAD_COMPLETE, fileName, new Object[]{}));
     }
-
 }

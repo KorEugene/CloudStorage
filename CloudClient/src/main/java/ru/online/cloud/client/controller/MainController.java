@@ -67,21 +67,21 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        loadProperties();
+//        loadProperties();
         connectToServer();
         initLocalFilePanel();
         initCloudFilePanel();
         disableCloudInterface(true);
     }
 
-    private void loadProperties() {
-        try (InputStream input = MainController.class.getClassLoader().getResourceAsStream("client.properties")) {
-            properties = new Properties();
-            properties.load(input);
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
-    }
+//    private void loadProperties() {
+//        try (InputStream input = MainController.class.getClassLoader().getResourceAsStream("client.properties")) {
+//            properties = new Properties();
+//            properties.load(input);
+//        } catch (IOException exception) {
+//            exception.printStackTrace();
+//        }
+//    }
 
     public void shutdown() {
         disconnectFromServer();
@@ -113,7 +113,8 @@ public class MainController implements Initializable {
     private void initLocalFilePanel() {
         initTableView(localFiles, localPathField);
         initLocalDisks();
-        updateList(CommandType.LS, Paths.get(properties.getProperty("def.directory")), localFiles, localPathField);
+//        updateList(CommandType.LS, Paths.get(properties.getProperty("def.directory")), localFiles, localPathField);
+        updateList(CommandType.LS, Paths.get(System.getProperty("user.home")), localFiles, localPathField);
     }
 
     private void initCloudFilePanel() {
