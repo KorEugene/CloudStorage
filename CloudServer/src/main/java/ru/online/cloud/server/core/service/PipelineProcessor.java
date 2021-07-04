@@ -1,6 +1,7 @@
 package ru.online.cloud.server.core.service;
 
 import io.netty.channel.ChannelHandlerContext;
+import ru.online.cloud.server.core.handler.parameter.FileParameter;
 
 public interface PipelineProcessor {
 
@@ -8,5 +9,5 @@ public interface PipelineProcessor {
 
     void switchToCommand(ChannelHandlerContext ctx);
 
-    void switchToFileUpload(ChannelHandlerContext ctx, String fileName, long fileSize, String userDir);
+    void switchToFileUpload(ChannelHandlerContext ctx, FileParameter fileParameter);
 }

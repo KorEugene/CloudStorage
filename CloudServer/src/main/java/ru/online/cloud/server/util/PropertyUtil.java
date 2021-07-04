@@ -48,6 +48,4 @@ public class PropertyUtil {
     public static String getServerDBPassword() {
         return properties.getProperty(SERVER_DB_PASSWORD);
     }
-
-
 }

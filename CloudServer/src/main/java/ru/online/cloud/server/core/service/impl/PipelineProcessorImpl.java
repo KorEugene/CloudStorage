@@ -10,6 +10,7 @@ import lombok.extern.log4j.Log4j2;
 import ru.online.cloud.server.core.handler.AuthInboundHandler;
 import ru.online.cloud.server.core.handler.CommandInboundHandler;
 import ru.online.cloud.server.core.handler.FilesWriteHandler;
+import ru.online.cloud.server.core.handler.parameter.FileParameter;
 import ru.online.cloud.server.core.service.PipelineProcessor;
 import ru.online.cloud.server.factory.Factory;
 
@@ -71,7 +72,7 @@ public class PipelineProcessorImpl implements PipelineProcessor {
     }
 
     @Override
-    public void switchToFileUpload(ChannelHandlerContext ctx, String fileName, long fileSize, String userDir) {
+    public void switchToFileUpload(ChannelHandlerContext ctx, FileParameter fileParameter) {
         ChannelPipeline pipeline = ctx.pipeline();
         if (pipeline.get(ObjectEncoder.class) == null) {
             pipeline.addLast(new ObjectEncoder());
@@ -80,7 +81,7 @@ public class PipelineProcessorImpl implements PipelineProcessor {
             pipeline.addLast(new ChunkedWriteHandler());
         }
         if (pipeline.get(FilesWriteHandler.class) == null) {
-            pipeline.addLast(new FilesWriteHandler(this, Factory.getStorageService(), fileName, fileSize, userDir));
+            pipeline.addLast(new FilesWriteHandler(this, Factory.getStorageService(), fileParameter));
         }
         log.info("Pipeline changed to: " + ctx.pipeline());
     }

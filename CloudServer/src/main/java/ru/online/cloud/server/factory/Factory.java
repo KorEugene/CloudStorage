@@ -4,7 +4,10 @@ import ru.online.cloud.server.core.NettyServer;
 import ru.online.cloud.server.core.service.PipelineProcessor;
 import ru.online.cloud.server.core.service.impl.PipelineProcessorImpl;
 import ru.online.cloud.server.service.*;
-import ru.online.cloud.server.service.impl.*;
+import ru.online.cloud.server.service.impl.CommandDictionaryService;
+import ru.online.cloud.server.service.impl.FlywayService;
+import ru.online.cloud.server.service.impl.LocalStorageService;
+import ru.online.cloud.server.service.impl.PostgreSQLService;
 import ru.online.cloud.server.service.impl.command.*;
 
 import java.util.Arrays;

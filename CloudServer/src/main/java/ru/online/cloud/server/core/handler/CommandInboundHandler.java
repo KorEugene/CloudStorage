@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.stream.ChunkedFile;
 import lombok.extern.log4j.Log4j2;
+import ru.online.cloud.server.core.handler.parameter.FileParameter;
 import ru.online.cloud.server.core.service.PipelineProcessor;
 import ru.online.cloud.server.service.DictionaryService;
 import ru.online.domain.command.Command;
@@ -45,7 +46,8 @@ public class CommandInboundHandler extends ChannelInboundHandlerAdapter {
             ctx.writeAndFlush(result);
             if (result.getCommandName() == CommandType.UPLOAD_READY) {
                 pipelineProcessor.clear(ctx);
-                pipelineProcessor.switchToFileUpload(ctx, (String) command.getArgs()[0], (Long) command.getArgs()[1], (String) command.getArgs()[2]);
+                pipelineProcessor.switchToFileUpload(ctx,
+                        new FileParameter((String) command.getArgs()[0], (Long) command.getArgs()[1], (String) command.getArgs()[2]));
             }
         }
     }

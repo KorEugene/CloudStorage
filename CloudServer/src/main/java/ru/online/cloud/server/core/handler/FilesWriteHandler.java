@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.log4j.Log4j2;
+import ru.online.cloud.server.core.handler.parameter.FileParameter;
 import ru.online.cloud.server.core.service.PipelineProcessor;
 import ru.online.cloud.server.service.StorageService;
 import ru.online.domain.command.Command;
@@ -16,18 +17,14 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
 
     private final PipelineProcessor pipelineProcessor;
     private final StorageService storageService;
-    private final String fileName;
-    private final long fileSize;
+    private final FileParameter fileParameter;
     private File file;
-    private String userDir;
 
-    public FilesWriteHandler(PipelineProcessor pipelineProcessor, StorageService storageService, String fileName, long fileSize, String userDir) {
+    public FilesWriteHandler(PipelineProcessor pipelineProcessor, StorageService storageService, FileParameter fileParameter) {
         this.pipelineProcessor = pipelineProcessor;
         this.storageService = storageService;
-        this.fileName = fileName;
-        this.fileSize = fileSize;
-        this.userDir = userDir;
-        prepareToDownloadFile(fileName, userDir);
+        this.fileParameter = fileParameter;
+        prepareToDownloadFile(fileParameter.getFileName(), fileParameter.getUserDir());
     }
 
     private void prepareToDownloadFile(String fileName, String userDir) {
@@ -48,6 +45,16 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
 
         ByteBuf byteBuf = (ByteBuf) chunkedFile;
 
+        writeChunk(ctx, byteBuf);
+
+        if (file.length() == fileParameter.getFileSize()) {
+            ctx.writeAndFlush(new Command(CommandType.UPLOAD_COMPLETE, fileParameter.getFileName(), new Object[]{}));
+            pipelineProcessor.clear(ctx);
+            pipelineProcessor.switchToCommand(ctx);
+        }
+    }
+
+    private void writeChunk(ChannelHandlerContext ctx, ByteBuf byteBuf) {
         try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file, true))) {
             while (byteBuf.isReadable()) {
                 os.write(byteBuf.readByte());
@@ -56,12 +63,6 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
             exceptionCaught(ctx, exception);
         } finally {
             byteBuf.release();
-        }
-
-        if (file.length() == fileSize) {
-            ctx.writeAndFlush(new Command(CommandType.UPLOAD_COMPLETE, fileName, new Object[]{}));
-            pipelineProcessor.clear(ctx);
-            pipelineProcessor.switchToCommand(ctx);
         }
     }
 

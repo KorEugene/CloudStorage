@@ -1,8 +1,7 @@
 package ru.online.cloud.server.service.impl;
 
-import ru.online.cloud.server.factory.Factory;
-import ru.online.cloud.server.service.DictionaryService;
 import ru.online.cloud.server.service.CommandService;
+import ru.online.cloud.server.service.DictionaryService;
 import ru.online.domain.command.Command;
 import ru.online.domain.command.CommandType;
 

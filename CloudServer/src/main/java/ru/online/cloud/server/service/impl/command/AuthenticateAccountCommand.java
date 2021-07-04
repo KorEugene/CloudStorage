@@ -4,6 +4,7 @@ import ru.online.cloud.server.factory.Factory;
 import ru.online.cloud.server.service.CommandService;
 import ru.online.cloud.server.service.DataBaseProcessService;
 import ru.online.cloud.server.service.StorageService;
+import ru.online.cloud.server.util.CommandUtil;
 import ru.online.cloud.server.util.PropertyUtil;
 import ru.online.domain.command.Command;
 import ru.online.domain.command.CommandType;
@@ -24,9 +25,7 @@ public class AuthenticateAccountCommand implements CommandService {
     @Override
     public Command processCommand(Command command) {
 
-        if (command.getArgs().length != REQUIREMENT_COUNT_COMMAND_PARTS) {
-            throw new IllegalArgumentException("Command \"" + getCommand() + "\" is not correct");
-        }
+        CommandUtil.checkCommandArgsCount(command, REQUIREMENT_COUNT_COMMAND_PARTS);
 
         String username = (String) command.getArgs()[0];
         String password = (String) command.getArgs()[1];

@@ -1,6 +1,7 @@
 package ru.online.cloud.server.service.impl.command;
 
 import ru.online.cloud.server.service.CommandService;
+import ru.online.cloud.server.util.CommandUtil;
 import ru.online.domain.command.Command;
 import ru.online.domain.command.CommandType;
 
@@ -19,9 +20,7 @@ public class MakeDirectoryCommand implements CommandService {
     @Override
     public Command processCommand(Command command) {
 
-        if (command.getArgs().length != REQUIREMENT_COUNT_COMMAND_PARTS) {
-            throw new IllegalArgumentException("Command \"" + getCommand() + "\" is not correct");
-        }
+        CommandUtil.checkCommandArgsCount(command, REQUIREMENT_COUNT_COMMAND_PARTS);
 
         Path path = Paths.get(command.getPath());
         if (Files.notExists(path)) {
