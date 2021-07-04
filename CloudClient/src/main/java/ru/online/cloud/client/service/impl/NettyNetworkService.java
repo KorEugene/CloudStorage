@@ -2,18 +2,18 @@ package ru.online.cloud.client.service.impl;
 
 import ru.online.cloud.client.factory.Factory;
 import ru.online.cloud.client.service.Callback;
-import ru.online.cloud.client.service.ClientService;
+import ru.online.cloud.client.service.Client;
 import ru.online.cloud.client.service.NetworkService;
 import ru.online.domain.command.Command;
 
 public class NettyNetworkService implements NetworkService {
 
-    private ClientService clientService;
+    private final Client client;
 
     private static NettyNetworkService instance;
 
     private NettyNetworkService() {
-        this.clientService = Factory.getClientService();
+        this.client = Factory.getClient();
     }
 
     public static NetworkService getInstance() {
@@ -25,27 +25,27 @@ public class NettyNetworkService implements NetworkService {
 
     @Override
     public void sendCommand(Command command, Callback callback) {
-        clientService.sendCommand(command, callback);
+        client.sendCommand(command, callback);
     }
 
     @Override
     public void sendDownloadCommand(Command command, Callback callback) {
-        clientService.downloadFile(command, callback);
+        client.downloadFile(command, callback);
     }
 
     @Override
     public void sendFile(Command command, Callback callback) {
-        clientService.sendFile(command, callback);
+        client.sendFile(command, callback);
     }
 
     @Override
     public void openConnection() {
-        clientService.startClient();
+        client.startClient();
     }
 
     @Override
     public void closeConnection() {
-        clientService.stopClient();
+        client.stopClient();
     }
 
 }

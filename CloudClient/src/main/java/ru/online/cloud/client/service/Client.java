@@ -2,7 +2,7 @@ package ru.online.cloud.client.service;
 
 import ru.online.domain.command.Command;
 
-public interface ClientService {
+public interface Client {
 
     void startClient();
 

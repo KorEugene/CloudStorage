@@ -3,43 +3,46 @@ package ru.online.cloud.client.core.handler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.serialization.ClassResolvers;
-import io.netty.handler.codec.serialization.ObjectDecoder;
-import io.netty.handler.codec.serialization.ObjectEncoder;
-import io.netty.handler.stream.ChunkedWriteHandler;
+import lombok.extern.log4j.Log4j2;
+import ru.online.cloud.client.core.handler.parameter.FileParameter;
+import ru.online.cloud.client.core.service.PipelineProcessor;
 import ru.online.cloud.client.service.Callback;
+import ru.online.cloud.client.service.StorageService;
 import ru.online.domain.command.Command;
 import ru.online.domain.command.CommandType;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 
+@Log4j2
 public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
 
-    private SocketChannel channel;
-    private String fileName;
-    private String path;
-    private long fileSize;
+    private final SocketChannel channel;
+    private final PipelineProcessor pipelineProcessor;
+    private final StorageService storageService;
+    private final FileParameter fileParameter;
     private File file;
-    private Callback answer;
+    private final Callback answer;
 
-    public FilesWriteHandler(SocketChannel channel, String fileName, long fileSize, String path, Callback answer) {
+    public FilesWriteHandler(SocketChannel channel, PipelineProcessor pipelineProcessor, StorageService storageService, FileParameter fileParameter, Callback answer) {
         this.channel = channel;
-        this.fileName = fileName;
-        this.fileSize = fileSize;
-        this.path = path;
-        checkFileIsExists(path, fileName);
+        this.pipelineProcessor = pipelineProcessor;
+        this.storageService = storageService;
+        this.fileParameter = fileParameter;
         this.answer = answer;
+        prepareToDownloadFile(fileParameter.getFileName(), fileParameter.getUserDir());
     }
 
-    private void checkFileIsExists(String path, String fileName) {
-        file = new File(path + File.separator + fileName);
-        if (file.exists()) {
-            file.delete();
+    private void prepareToDownloadFile(String fileName, String userDir) {
+        file = new File(userDir + File.separator + fileName);
+        if (storageService.checkFileIsExists(file)) {
+            if (!storageService.deleteFile(file)) {
+                try {
+                    throw new IOException();
+                } catch (IOException exception) {
+                    log.error(exception.getMessage());
+                }
+            }
         }
     }
 
@@ -48,49 +51,31 @@ public class FilesWriteHandler extends ChannelInboundHandlerAdapter {
 
         ByteBuf byteBuf = (ByteBuf) chunkedFile;
 
+        writeChunk(ctx, byteBuf);
+
+        if (file.length() == fileParameter.getFileSize()) {
+            answer.callback(new Command(CommandType.DOWNLOAD_COMPLETE, null, new Object[]{}));
+            pipelineProcessor.clear(channel);
+            pipelineProcessor.switchToCommand(ctx);
+        }
+    }
+
+    private void writeChunk(ChannelHandlerContext ctx, ByteBuf byteBuf) {
         try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file, true))) {
             while (byteBuf.isReadable()) {
                 os.write(byteBuf.readByte());
-                fileSize--;
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        byteBuf.release();
-
-        if (fileSize == 0) {
-            switchToCommandPipeline(channel, answer);
+        } catch (Exception exception) {
+            exceptionCaught(ctx, exception);
+        } finally {
+            byteBuf.release();
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        System.out.println(cause.getMessage());
-        switchToCommandPipeline(channel, answer);
+        log.error(cause.getMessage());
+        pipelineProcessor.clear(channel);
+        pipelineProcessor.switchToCommand(ctx);
     }
-
-    private void switchToCommandPipeline(SocketChannel channel, Callback callback) {
-        ChannelPipeline p = channel.pipeline();
-        if (p.get("chunkWr") != null) {
-            p.remove("chunkWr");
-        }
-        if (p.get("fileWr") != null) {
-            p.remove("fileWr");
-        }
-        if (p.get("decoder") == null) {
-            p.addBefore("encoder","decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
-        }
-        if (p.get("encoder") == null) {
-            p.addLast("encoder", new ObjectEncoder());
-        }
-        if (p.get("dataInHandler") == null) {
-            p.addLast("dataInHandler", new DataInboundHandler());
-        }
-        if (p.get("chunkWr") == null) {
-            p.addLast("chunkWr", new ChunkedWriteHandler());
-        }
-        callback.callback(new Command(CommandType.DOWNLOAD_COMPLETE, null, new Object[]{}));
-    }
-
 }

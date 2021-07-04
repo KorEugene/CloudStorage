@@ -12,30 +12,37 @@ import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import lombok.extern.log4j.Log4j2;
 import ru.online.cloud.client.core.handler.DataInboundHandler;
-import ru.online.cloud.client.core.handler.FilesWriteHandler;
+import ru.online.cloud.client.core.handler.parameter.FileParameter;
+import ru.online.cloud.client.core.service.PipelineProcessor;
+import ru.online.cloud.client.factory.Factory;
 import ru.online.cloud.client.service.Callback;
-import ru.online.cloud.client.service.ClientService;
+import ru.online.cloud.client.service.Client;
+import ru.online.cloud.client.util.PropertyUtil;
 import ru.online.domain.command.Command;
 
 import java.io.File;
 import java.io.IOException;
 
-public class NettyClientService implements ClientService {
+@Log4j2
+public class NettyClient implements Client {
 
-    private static final java.lang.String HOST = "localhost";
-    private static final int PORT = 8189;
+    private static final java.lang.String HOST = PropertyUtil.getServerHost();
+    private static final int PORT = Integer.parseInt(PropertyUtil.getServerPort());
 
+    private final PipelineProcessor pipelineProcessor;
     private SocketChannel channel;
 
-    private static NettyClientService instance;
+    private static NettyClient instance;
 
-    private NettyClientService() {
+    private NettyClient(PipelineProcessor pipelineProcessor) {
+        this.pipelineProcessor = pipelineProcessor;
     }
 
-    public static NettyClientService getInstance() {
+    public static NettyClient getInstance() {
         if (instance == null) {
-            instance = new NettyClientService();
+            instance = new NettyClient(Factory.getPipelineProcessor());
         }
         return instance;
     }
@@ -53,18 +60,18 @@ public class NettyClientService implements ClientService {
                             protected void initChannel(SocketChannel socketChannel) {
                                 channel = socketChannel;
                                 socketChannel.pipeline()
-                                        .addLast("decoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
-                                        .addLast("encoder", new ObjectEncoder())
-                                        .addLast("dataInHandler", new DataInboundHandler())
-                                        .addLast("chunkWr", new ChunkedWriteHandler());
+                                        .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
+                                        .addLast(new ObjectEncoder())
+                                        .addLast(new DataInboundHandler())
+                                        .addLast(new ChunkedWriteHandler());
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
-                System.out.println("Клиент подключился к серверу " + HOST + ":" + PORT);
+                log.info("Client connected to server " + HOST + ":" + PORT);
                 future.channel().closeFuture().sync();
-                System.out.println("Клиент отключился от сервера " + HOST + ":" + PORT);
+                log.info("Client disconnected from server " + HOST + ":" + PORT);
             } catch (Exception exception) {
-                System.out.println("Клиент упал");
+                log.error("Client crashed");
             } finally {
                 workerGroup.shutdownGracefully();
             }
@@ -96,7 +103,8 @@ public class NettyClientService implements ClientService {
     public void downloadFile(Command command, Callback callback) {
 
         channel.writeAndFlush(command);
-        switchToFileDownloadPipeline(channel, (String) command.getArgs()[0], (long) command.getArgs()[1], (String) command.getArgs()[2], callback);
+        pipelineProcessor.clear(channel);
+        pipelineProcessor.switchToFileUpload(channel, new FileParameter((String) command.getArgs()[0], (long) command.getArgs()[1], (String) command.getArgs()[2]), callback);
     }
 
     @Override
@@ -107,25 +115,6 @@ public class NettyClientService implements ClientService {
             p.get(DataInboundHandler.class).setIncomingData(callback);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private void switchToFileDownloadPipeline(SocketChannel channel, String fileName, long fileSize, String path, Callback callback) {
-        ChannelPipeline p = channel.pipeline();
-        if (p.get("chunkWr") != null) {
-            p.remove("chunkWr");
-        }
-        if (p.get("decoder") != null) {
-            p.remove("decoder");
-        }
-        if (p.get("dataInHandler") != null) {
-            p.remove("dataInHandler");
-        }
-        if (p.get("chunkWr") == null) {
-            p.addLast("chunkWr", new ChunkedWriteHandler());
-        }
-        if (p.get("fileWr") == null) {
-            p.addLast("fileWr", new FilesWriteHandler(channel, fileName, fileSize, path, callback));
         }
     }
 }

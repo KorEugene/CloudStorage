@@ -15,12 +15,18 @@
         </Menu>
     </MenuBar>
 
-    <HBox VBox.vgrow="ALWAYS" spacing="10.0">
+    <GridPane VBox.vgrow="ALWAYS" maxHeight="Infinity" maxWidth="Infinity" >
         <padding>
             <Insets top="10" bottom="10" left="10" right="10"/>
         </padding>
 
-        <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="45"/>
+            <ColumnConstraints percentWidth="10"/>
+            <ColumnConstraints percentWidth="45"/>
+        </columnConstraints>
+
+        <VBox GridPane.hgrow="ALWAYS" GridPane.vgrow="always" spacing="5.0" GridPane.rowIndex="0" GridPane.columnIndex="0">
             <HBox spacing="3.0">
                 <ComboBox fx:id="disksBox" onAction="#selectDisk"/>
                 <TextField fx:id="localPathField" editable="false" HBox.hgrow="ALWAYS"/>
@@ -35,7 +41,7 @@
             </HBox>
         </VBox>
 
-        <VBox alignment="CENTER" spacing="10.0">
+        <VBox GridPane.hgrow="ALWAYS" GridPane.vgrow="always" alignment="CENTER" spacing="10.0" GridPane.rowIndex="0" GridPane.columnIndex="1">
             <Button fx:id="btnUpload" onAction="#btnUploadCommand" focusTraversable="false">
                 <graphic>
                     <ImageView>
@@ -53,7 +59,7 @@
             </Button>
         </VBox>
 
-        <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+        <VBox GridPane.hgrow="ALWAYS" GridPane.vgrow="always" spacing="5.0" GridPane.rowIndex="0" GridPane.columnIndex="2">
             <HBox spacing="3.0">
                 <TextField fx:id="cloudPathField" editable="false" HBox.hgrow="ALWAYS"/>
                 <Button fx:id="btnCloudUp" text="Up" onAction="#btnCloudPathUp"/>
@@ -64,14 +70,19 @@
                 <TextField fx:id="username"/>
                 <Label>Password</Label>
                 <PasswordField fx:id="password"/>
-                <Button fx:id="authenticate" text="Authenticate" onAction="#sendAuthenticateCommand"/>
-                <Button fx:id="register" text="Register" onAction="#sendRegisterCommand"/>
-                <Button fx:id="btnRefreshCloud" text="Refresh Cloud" onAction="#refreshCloudDirs"/>
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+            </HBox>
+            <HBox spacing="5" alignment="BASELINE_LEFT">
+                <Button prefWidth="100" fx:id="authenticate" text="Authenticate" onAction="#sendAuthenticateCommand"/>
+                <Button prefWidth="100" fx:id="register" text="Register" onAction="#sendRegisterCommand"/>
+                <Button prefWidth="100" fx:id="btnRefreshCloud" text="Refresh Cloud" onAction="#refreshCloudDirs"/>
                 <padding>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
                 </padding>
             </HBox>
         </VBox>
-    </HBox>
+    </GridPane>
 
 </VBox>

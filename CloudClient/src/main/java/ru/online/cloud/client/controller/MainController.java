@@ -9,6 +9,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import ru.online.cloud.client.factory.Factory;
 import ru.online.cloud.client.service.NetworkService;
+import ru.online.cloud.client.util.AlertUtil;
+import ru.online.cloud.client.util.PropertyUtil;
 import ru.online.domain.FileInfo;
 import ru.online.domain.FileType;
 import ru.online.domain.command.Command;
@@ -16,7 +18,6 @@ import ru.online.domain.command.CommandType;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -24,14 +25,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class MainController implements Initializable {
 
     public NetworkService networkService;
-    private Properties properties;
     private String userCloudDirectory;
 
     @FXML
@@ -67,21 +66,38 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-//        loadProperties();
+        PropertyUtil.loadProperties();
         connectToServer();
         initLocalFilePanel();
         initCloudFilePanel();
         disableCloudInterface(true);
     }
 
-//    private void loadProperties() {
-//        try (InputStream input = MainController.class.getClassLoader().getResourceAsStream("client.properties")) {
-//            properties = new Properties();
-//            properties.load(input);
-//        } catch (IOException exception) {
-//            exception.printStackTrace();
-//        }
-//    }
+    private void connectToServer() {
+        if (networkService == null) {
+            networkService = Factory.getNetworkService();
+        }
+        networkService.openConnection();
+    }
+
+    private void initLocalFilePanel() {
+        initTableView(localFiles, localPathField);
+        initLocalDisks();
+        updateList(CommandType.LS, Paths.get(System.getProperty(PropertyUtil.getDefaultUserDirectory())), localFiles, localPathField);
+    }
+
+    private void initCloudFilePanel() {
+        initTableView(cloudFiles, cloudPathField);
+    }
+
+    private void disableCloudInterface(boolean value) {
+        btnUpload.setDisable(value);
+        btnDownload.setDisable(value);
+        btnRefreshCloud.setDisable(value);
+        cloudPathField.setDisable(value);
+        cloudFiles.setDisable(value);
+        btnCloudUp.setDisable(value);
+    }
 
     public void shutdown() {
         disconnectFromServer();
@@ -108,17 +124,6 @@ public class MainController implements Initializable {
                 updateList(CommandType.LS, upperPath, cloudFiles, cloudPathField);
             }
         }
-    }
-
-    private void initLocalFilePanel() {
-        initTableView(localFiles, localPathField);
-        initLocalDisks();
-//        updateList(CommandType.LS, Paths.get(properties.getProperty("def.directory")), localFiles, localPathField);
-        updateList(CommandType.LS, Paths.get(System.getProperty("user.home")), localFiles, localPathField);
-    }
-
-    private void initCloudFilePanel() {
-        initTableView(cloudFiles, cloudPathField);
     }
 
     private void initTableView(TableView<FileInfo> table, TextField pathField) {
@@ -152,6 +157,12 @@ public class MainController implements Initializable {
         fileDateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(dtf)));
 
         table.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDateColumn);
+
+        fileTypeColumn.prefWidthProperty().bind(table.widthProperty().divide(10));
+        fileNameColumn.prefWidthProperty().bind(table.widthProperty().divide(2.5));
+        fileSizeColumn.prefWidthProperty().bind(table.widthProperty().divide(5));
+        fileDateColumn.prefWidthProperty().bind(table.widthProperty().divide(4));
+
         table.getSortOrder().add(fileTypeColumn);
 
         table.setOnMouseClicked(event -> {
@@ -192,8 +203,7 @@ public class MainController implements Initializable {
                 table.getItems().addAll(Files.list(path).map(FileInfo::new).collect(Collectors.toList()));
                 table.sort();
             } catch (IOException e) {
-                Alert alert = new Alert(Alert.AlertType.WARNING, "Unable update list of files", ButtonType.OK);
-                alert.showAndWait();
+                AlertUtil.getAlert(Alert.AlertType.WARNING, "Unable update list of files").showAndWait();
             }
         }
     }
@@ -207,18 +217,14 @@ public class MainController implements Initializable {
         if (!tableView.isFocused()) {
             return null;
         }
+        if (tableView.getSelectionModel().isEmpty()) {
+            return null;
+        }
         return tableView.getSelectionModel().getSelectedItem().getFileName();
     }
 
     public String getCurrentPath(TextField pathField) {
         return pathField.getText();
-    }
-
-    public void connectToServer() {
-        if (networkService == null) {
-            networkService = Factory.getNetworkService();
-        }
-        networkService.openConnection();
     }
 
     public void disconnectFromServer() {
@@ -255,15 +261,6 @@ public class MainController implements Initializable {
         btnLocalUp.setDisable(value);
     }
 
-    private void disableCloudInterface(boolean value) {
-        btnUpload.setDisable(value);
-        btnDownload.setDisable(value);
-        btnRefreshCloud.setDisable(value);
-        cloudPathField.setDisable(value);
-        cloudFiles.setDisable(value);
-        btnCloudUp.setDisable(value);
-    }
-
     private void disableAuthBlock() {
         username.setDisable(true);
         password.setDisable(true);
@@ -272,6 +269,9 @@ public class MainController implements Initializable {
     }
 
     public void btnUploadCommand() {
+        if (getSelectedFilename(localFiles) == null) {
+            return;
+        }
         String path = getCurrentPath(localPathField) + File.separator + getSelectedFilename(localFiles);
         File file = new File(path);
         if (file.isDirectory()) {
@@ -296,9 +296,12 @@ public class MainController implements Initializable {
     }
 
     public void btnDownloadCommand() {
+        if (getSelectedFilename(cloudFiles) == null) {
+            return;
+        }
         String path = getCurrentPath(cloudPathField) + File.separator + getSelectedFilename(cloudFiles);
         FileType type = cloudFiles.getSelectionModel().getSelectedItem().getType();
-        if (type == FileType.DIRECTORY) {
+        if (type == FileType.DIRECTORY || cloudFiles.getSelectionModel().getSelectedItem() == null) {
             return;
         }
         File file = new File(path);
@@ -322,12 +325,10 @@ public class MainController implements Initializable {
         networkService.sendCommand(new Command(CommandType.REGISTRATION_REQUEST, "", new Object[]{username.getText(), password.getText()}), result -> {
             Platform.runLater(() -> {
                 if (result.getCommandName() == CommandType.REGISTRATION_FAILED) {
-                    Alert alert = new Alert(Alert.AlertType.WARNING, "Registration failed", ButtonType.OK);
-                    alert.showAndWait();
+                    AlertUtil.getAlert(Alert.AlertType.WARNING, "Registration failed").showAndWait();
                 }
                 if (result.getCommandName() == CommandType.REGISTRATION_SUCCEEDED) {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Registration succeed", ButtonType.OK);
-                    alert.showAndWait();
+                    AlertUtil.getAlert(Alert.AlertType.INFORMATION, "Registration succeed").showAndWait();
                 }
                 username.clear();
                 password.clear();
@@ -339,8 +340,7 @@ public class MainController implements Initializable {
         networkService.sendCommand(new Command(CommandType.AUTH_REQUEST, "", new Object[]{username.getText(), password.getText()}), result -> {
             Platform.runLater(() -> {
                 if (result.getCommandName() == CommandType.AUTH_FAILED) {
-                    Alert alert = new Alert(Alert.AlertType.WARNING, "Auth failed", ButtonType.OK);
-                    alert.showAndWait();
+                    AlertUtil.getAlert(Alert.AlertType.WARNING, "Auth failed").showAndWait();
                 }
                 if (result.getCommandName() == CommandType.AUTH_SUCCEEDED) {
                     userCloudDirectory = (String) result.getArgs()[0];
