@@ -8,6 +8,7 @@ import ru.online.domain.command.CommandType;
 
 public class RegisterAccountCommand implements CommandService {
 
+    private static final int REQUIREMENT_COUNT_COMMAND_PARTS = 2;
     private final DataBaseProcessService dataBaseProcessService;
 
     public RegisterAccountCommand() {
@@ -16,6 +17,10 @@ public class RegisterAccountCommand implements CommandService {
 
     @Override
     public Command processCommand(Command command) {
+
+        if (command.getArgs().length != REQUIREMENT_COUNT_COMMAND_PARTS) {
+            throw new IllegalArgumentException("Command \"" + getCommand() + "\" is not correct");
+        }
 
         String username = (String) command.getArgs()[0];
         String password = (String) command.getArgs()[1];

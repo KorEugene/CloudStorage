@@ -14,8 +14,14 @@ import java.util.stream.Collectors;
 
 public class ViewFilesInDirCommand implements CommandService {
 
+    private static final int REQUIREMENT_COUNT_COMMAND_PARTS = 0;
+
     @Override
     public Command processCommand(Command command) {
+
+        if (command.getArgs().length != REQUIREMENT_COUNT_COMMAND_PARTS) {
+            throw new IllegalArgumentException("Command \"" + getCommand() + "\" is not correct");
+        }
 
         Command result = new Command();
         result.setCommandName(command.getCommandName());

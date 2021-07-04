@@ -25,7 +25,6 @@ public class NettyServer implements Server {
     private static NettyServer instance;
 
     private NettyServer() {
-        Factory.getDataBaseProcessService().start();
     }
 
     public static NettyServer getInstance() {
@@ -50,8 +49,8 @@ public class NettyServer implements Server {
                         channel.pipeline()
                                 .addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
                                 .addLast(new ObjectEncoder())
-                                .addLast(new AuthInboundHandler());
-
+                                .addLast(new AuthInboundHandler(Factory.getDictionaryService(Factory.getAuthServices()),
+                                        Factory.getPipelineProcessor()));
                     }
                 });
 

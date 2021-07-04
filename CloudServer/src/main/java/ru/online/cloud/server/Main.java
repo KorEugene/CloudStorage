@@ -10,6 +10,8 @@ public class Main {
 
         Factory.getDataBaseMigrationService().migrate();
 
+        Factory.getDataBaseProcessService().start();
+
         Factory.getStorageService().init();
 
         Factory.getServer().startServer();

@@ -50,4 +50,14 @@ public class LocalStorageService implements StorageService {
         }
         return fullPath;
     }
+
+    @Override
+    public boolean checkFileIsExists(File file) {
+        return file.exists();
+    }
+
+    @Override
+    public boolean deleteFile(File file) {
+        return file.delete();
+    }
 }

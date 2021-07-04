@@ -324,15 +324,13 @@ public class MainController implements Initializable {
                 if (result.getCommandName() == CommandType.REGISTRATION_FAILED) {
                     Alert alert = new Alert(Alert.AlertType.WARNING, "Registration failed", ButtonType.OK);
                     alert.showAndWait();
-                    username.clear();
-                    password.clear();
                 }
                 if (result.getCommandName() == CommandType.REGISTRATION_SUCCEEDED) {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, "Registration succeed", ButtonType.OK);
                     alert.showAndWait();
-                    username.clear();
-                    password.clear();
                 }
+                username.clear();
+                password.clear();
             });
         });
     }
@@ -343,17 +341,15 @@ public class MainController implements Initializable {
                 if (result.getCommandName() == CommandType.AUTH_FAILED) {
                     Alert alert = new Alert(Alert.AlertType.WARNING, "Auth failed", ButtonType.OK);
                     alert.showAndWait();
-                    username.clear();
-                    password.clear();
                 }
                 if (result.getCommandName() == CommandType.AUTH_SUCCEEDED) {
-                    username.clear();
-                    password.clear();
                     userCloudDirectory = (String) result.getArgs()[0];
                     refreshCloudDirs();
                     disableAuthBlock();
                     disableCloudInterface(false);
                 }
+                username.clear();
+                password.clear();
             });
         });
     }

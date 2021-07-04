@@ -42,9 +42,10 @@ public class PostgreSQLService implements DataBaseProcessService {
         String checkUsernameQuery = "SELECT * FROM accounts WHERE user_name = ?;";
         try (PreparedStatement ps = connection.prepareStatement(checkUsernameQuery)) {
             ps.setString(1, username);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return true;
+            try (ResultSet resultSet = ps.executeQuery()) {
+                if (resultSet.next()) {
+                    return true;
+                }
             }
         } catch (SQLException sqlException) {
             log.error(sqlException.getMessage());
